@@ -151,112 +151,46 @@
   .btn-cancel { padding: 7px 16px; background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 7px; cursor: pointer; font-size: 13px; color: #374151; }
   .btn-add { padding: 7px 18px; background: #E8470A; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; }
   .btn-add.disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
-
-  /* ── 탭 ── */
-  #tab-bar { display: flex; border-bottom: 1px solid #E5E7EB; background: #fff; flex-shrink: 0; }
-  .tab-btn { padding: 10px 18px; font-size: 13px; font-weight: 600; color: #9CA3AF; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
-  .tab-btn.active { color: #E8470A; border-bottom-color: #E8470A; }
-  #tab-email { display: flex; flex: 1; min-height: 0; }
-  /* ── 랭킹 탭 ── */
-  #tab-ranking { display: none; flex: 1; min-height: 0; background: #F4F5F7; }
-  .rk-wrap { display: flex; flex: 1; min-height: 0; }
-
-  /* 사이드바 */
-  .rk-sidebar { width: 270px; flex-shrink:0; background:#1A1A1A; overflow-y:auto; padding:18px 16px; display:flex; flex-direction:column; gap:14px; min-height: 0; }
-  .rk-sidebar-title { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#E8470A; }
-  .rk-sidebar-sub { font-size:10px; color:#6B7280; line-height:1.5; }
-  .crit-block { background:#242424; border-radius:8px; padding:11px 13px; }
-  .crit-block-title { font-size:9.5px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px; display:flex; justify-content:space-between; }
-  .crit-block-title span { color:#E8470A; font-weight:800; }
-  .crit-line { display:flex; align-items:center; gap:7px; padding:3.5px 0; border-bottom:1px solid #2e2e2e; }
-  .crit-line:last-child { border-bottom:none; }
-  .crit-label { font-size:10px; color:#D1D5DB; flex:0 0 140px; }
-  .crit-bar-bg { flex:1; height:3px; background:#333; border-radius:2px; overflow:hidden; }
-  .crit-bar-fill { height:100%; background:#E8470A; border-radius:2px; }
-  .crit-pts { font-size:10.5px; font-weight:700; color:#E8470A; min-width:28px; text-align:right; }
-  .crit-pts.green { color:#34D399; }
-  .crit-pts.muted { color:#4B5563; }
-  .type-rule { display:flex; align-items:center; gap:7px; padding:4px 0; border-bottom:1px solid #2e2e2e; }
-  .type-rule:last-child { border-bottom:none; }
-  .type-rule-badge { font-size:9.5px; padding:2px 6px; border-radius:4px; font-weight:700; white-space:nowrap; }
-  .type-rule-desc { font-size:10px; color:#9CA3AF; }
-
-  /* 메인 */
-  .rk-main { flex:1; overflow-y:auto; padding:18px 20px; min-height: 0; }
-  .rk-top { margin-bottom:14px; }
-  .rk-title { font-size:16px; font-weight:800; color:#111827; }
-  .rk-title span { color:#E8470A; }
-  .rk-desc { font-size:11px; color:#9CA3AF; margin-top:2px; }
-
-  /* 요약 카드 */
-  .grade-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
-  .gs-card { border-radius:9px; padding:12px 14px; border:1.5px solid; cursor:pointer; transition:transform .12s, box-shadow .12s; }
-  .gs-card:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
-  .gs-count { font-size:26px; font-weight:900; line-height:1; }
-  .gs-label { font-size:11px; font-weight:700; margin-top:3px; }
-  .gs-pts { font-size:10px; margin-top:2px; opacity:.75; }
-
-  /* 분포 바 */
-  .dist-bar-wrap { background:#fff; border:1px solid #E5E7EB; border-radius:9px; padding:12px 16px; margin-bottom:16px; }
-  .dist-bar-label { font-size:10px; font-weight:700; color:#6B7280; margin-bottom:7px; text-transform:uppercase; letter-spacing:.04em; }
-  .dist-bar-track { display:flex; height:26px; border-radius:5px; overflow:hidden; }
-  .dist-seg { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; cursor:pointer; transition:opacity .15s; }
-  .dist-seg:hover { opacity:.82; }
-  .dist-legend { display:flex; gap:12px; margin-top:7px; flex-wrap:wrap; }
-  .dist-legend-item { font-size:10.5px; color:#6B7280; display:flex; align-items:center; gap:4px; }
-  .dist-dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
-
-  /* 카드 리스트 */
-  .rk-section-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin:14px 0 7px; display:flex; align-items:center; gap:5px; }
-  .rk-card { background:#fff; border:1px solid #E5E7EB; border-radius:9px; padding:10px 13px; margin-bottom:5px; display:grid; grid-template-columns:26px 1fr 80px 88px auto; align-items:center; gap:10px; cursor:pointer; transition:background .1s, box-shadow .1s; }
-  .rk-card:hover { background:#FFF9F7; box-shadow:0 2px 8px rgba(232,71,10,.08); }
-  .rk-rank { font-size:12px; font-weight:900; color:#D1D5DB; text-align:center; }
-  .rk-rank.gold   { color:#F59E0B; }
-  .rk-rank.silver { color:#9CA3AF; }
-  .rk-rank.bronze { color:#B45309; }
-  .rk-name { font-size:12px; font-weight:700; color:#111827; }
-  .rk-company { font-size:10px; color:#9CA3AF; margin-top:1px; }
-  .rk-score-col { display:flex; flex-direction:column; gap:3px; }
-  .rk-score-num { font-size:17px; font-weight:900; line-height:1; }
-  .rk-score-bar-bg { width:100%; height:3px; background:#F3F4F6; border-radius:2px; overflow:hidden; }
-  .rk-score-bar-fill { height:100%; border-radius:2px; }
-  .rk-type-badge { font-size:9.5px; padding:3px 7px; border-radius:4px; font-weight:700; border:1px solid; white-space:nowrap; display:inline-block; text-align:center; }
-  .rk-tags { display:flex; flex-wrap:wrap; gap:3px; justify-content:flex-end; }
-  .rk-tag { font-size:9px; background:#F3F4F6; color:#6B7280; padding:2px 5px; border-radius:5px; }
-
-
-  /* ── 3단 헤더 ── */
-  #app-title-bar { background:#111; height:46px; padding:0 20px; display:flex; align-items:center; gap:10px; flex-shrink:0; border-bottom:1px solid #222; }
-  .app-title { font-size:16px; font-weight:900; color:#fff; letter-spacing:-.02em; }
-  .app-title-sep { color:#444; }
-  .app-subtitle { font-size:11px; color:#666; flex:1; }
-  .db-badge { font-size:10px; background:#222; color:#888; border:1px solid #333; border-radius:10px; padding:2px 8px; }
-
-  #event-chip-bar { background:#1A1A1A; padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; border-bottom:1px solid #2a2a2a; min-height:40px; }
-  .event-chip { padding:5px 14px; border-radius:20px; border:1.5px solid #444; background:#2a2a2a; color:#aaa; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
-  .event-chip:hover { border-color:#888; color:#ddd; }
-  .event-chip.active { background:#E8470A; border-color:#E8470A; color:#fff; box-shadow:0 0 0 2px rgba(232,71,10,.25); }
-  .chip-placeholder { padding:5px 14px; border-radius:20px; border:1.5px dashed #333; color:#444; font-size:11px; cursor:default; white-space:nowrap; }
-
-  #event-detail-bar { background:#fff; border-bottom:2px solid #F3F4F6; padding:7px 20px; display:flex; align-items:center; gap:0; flex-shrink:0; min-height:42px; overflow-x:auto; }
-  .ev-season-pill { padding:4px 12px; border-radius:14px; border:1.5px solid #E5E7EB; background:#fff; color:#6B7280; font-size:11px; font-weight:600; cursor:pointer; margin-right:6px; white-space:nowrap; line-height:1.35; transition:all .12s; }
-  .ev-season-pill.active { background:#FFF4EE; border-color:#E8470A; color:#E8470A; font-weight:700; }
-  .ev-season-date { font-size:9.5px; opacity:.7; font-weight:400; }
-  .ev-divider { width:1px; background:#E5E7EB; height:22px; margin:0 14px; flex-shrink:0; }
-  .ev-perf-label { font-size:9px; color:#E8470A; font-weight:800; margin-right:8px; white-space:nowrap; }
-  .ev-stat-item { display:flex; flex-direction:column; gap:1px; margin-right:16px; white-space:nowrap; }
-  .ev-stat-label { font-size:9px; color:#9CA3AF; font-weight:700; }
-  .ev-stat-value { font-size:12px; color:#111; font-weight:700; }
-
-  /* ── 랭킹 상세 패널 ── */
-  .rk-detail { width: 410px; flex-shrink: 0; border-left: 1.5px solid #E5E7EB; background: #fff; overflow-y: auto; padding: 16px 18px; min-height: 0; }
-  .rk-detail-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #9CA3AF; text-align: center; gap: 8px; }
-  .rk-detail-empty .icon { font-size: 36px; }
-  .rk-detail-empty h3 { font-size: 13px; font-weight: 700; color: #374151; }
-  .rk-detail-empty p { font-size: 11px; line-height: 1.7; }
-  .rk-card.rk-card-active { background: #FFF4EE !important; border-left: 3px solid #E8470A; }
-  .recommend-note { font-size: 11.5px; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 7px; line-height: 1.55; }
   .recommend-note .rn-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── 등급 필터 바 ── */
+  #grade-filter-bar { padding: 8px 13px 10px; border-bottom: 1px solid #F3F4F6; background: #FAFAFA; }
+  .gf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+  .gf-label { font-size: 9.5px; font-weight: 800; color: #6B7280; text-transform: uppercase; letter-spacing: .08em; }
+  .scoring-btn { font-size: 9.5px; color: #9CA3AF; background: none; border: 1px solid #E5E7EB; border-radius: 4px; padding: 2px 7px; cursor: pointer; transition: all .1s; }
+  .scoring-btn:hover { color: #E8470A; border-color: #E8470A; }
+  .gf-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .gf-chip { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer; font-weight: 600; transition: all .12s; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .gf-chip:hover { border-color: #9CA3AF; }
+  .gf-chip .gf-cnt { font-size: 9.5px; opacity: .75; font-weight: 700; }
+  .gf-chip.active-all  { background: #1A1A1A; color: #fff; border-color: #1A1A1A; }
+  .gf-chip.active-high { background: #059669; color: #fff; border-color: #059669; }
+  .gf-chip.active-mid  { background: #D97706; color: #fff; border-color: #D97706; }
+  .gf-chip.active-low  { background: #DC2626; color: #fff; border-color: #DC2626; }
+
+  /* 연락처 아이템 점수 표시 */
+  .ci-grade-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .ci-grade-dot.high { background: #10B981; }
+  .ci-grade-dot.mid  { background: #F59E0B; }
+  .ci-grade-dot.low  { background: #EF4444; }
+  .ci-score-num { font-size: 9.5px; font-weight: 800; color: #9CA3AF; }
+
+  /* ── 채점 기준 모달 ── */
+  #scoring-modal .modal-box { max-width: 460px; max-height: 85vh; }
+  .sc-block { background: #1A1A1A; border-radius: 9px; padding: 12px 14px; margin-bottom: 8px; }
+  .sc-block-title { font-size: 9.5px; font-weight: 800; color: #E8470A; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .sc-block-title span { color: #E8470A; }
+  .sc-line { display: flex; align-items: center; gap: 8px; padding: 3.5px 0; border-bottom: 1px solid #2e2e2e; }
+  .sc-line:last-child { border-bottom: none; }
+  .sc-line-label { font-size: 10.5px; color: #D1D5DB; flex: 1; }
+  .sc-line-bar { flex: 0 0 60px; height: 3px; background: #333; border-radius: 2px; overflow: hidden; }
+  .sc-line-fill { height: 100%; background: #E8470A; border-radius: 2px; }
+  .sc-line-pts { font-size: 10.5px; font-weight: 700; color: #E8470A; min-width: 30px; text-align: right; }
+  .sc-grade-row { display: flex; gap: 8px; margin-top: 10px; }
+  .sc-grade-item { flex: 1; border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .sc-grade-item .sg-label { font-size: 9.5px; font-weight: 700; margin-bottom: 3px; }
+  .sc-grade-item .sg-range { font-size: 11px; font-weight: 800; }
+
 </style>
 </head>
 <body>
@@ -279,14 +213,7 @@
 <!-- ── Tier 3: 행사 상세 (동적) ── -->
 <div id="event-detail-bar"></div>
 
-<!-- ── 탭 바 ── -->
-<div id="tab-bar">
-  <button class="tab-btn active" id="tab-btn-ranking" onclick="switchTab('ranking')">📊 섭외 우선순위</button>
-  <button class="tab-btn" id="tab-btn-email" onclick="switchTab('email')">✉️ 이메일 생성기</button>
-</div>
-
 <!-- ── 메인 ── -->
-<div id="tab-email">
 <div id="main">
 
   <!-- 왼쪽 -->
@@ -305,6 +232,13 @@
       </div>
       <div id="count-label"></div>
       <div id="sort-row"></div>
+    </div>
+    <div id="grade-filter-bar">
+      <div class="gf-header">
+        <span class="gf-label">📊 섭외 우선순위 필터</span>
+        <button class="scoring-btn" onclick="openScoringModal()">채점 기준 보기 ›</button>
+      </div>
+      <div class="gf-chips" id="grade-filter-chips"></div>
     </div>
     <div id="contact-list"></div>
   </div>
@@ -327,9 +261,55 @@
 </div>
 
 </div><!-- /main -->
-</div><!-- /tab-email -->
 
-<div id="tab-ranking"></div>
+
+<!-- ── 채점 기준 모달 ── -->
+<div class="modal-overlay" id="scoring-modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><h2>📊 섭외 우선순위 채점 기준표</h2><p>명함 86장을 4가지 항목으로 자동 채점 → 우선순위 산정</p></div>
+      <button class="modal-close" onclick="closeScoringModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="sc-block">
+        <div class="sc-block-title">👤 직함 <span>MAX 30pt</span></div>
+        <div class="sc-line"><span class="sc-line-label">대표 / CEO / Founder</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:100%"></div></div><span class="sc-line-pts">+30</span></div>
+        <div class="sc-line"><span class="sc-line-label">이사 / Director / Manager</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:67%"></div></div><span class="sc-line-pts">+20</span></div>
+        <div class="sc-line"><span class="sc-line-label">담당 / Specialist</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:40%"></div></div><span class="sc-line-pts">+12</span></div>
+        <div class="sc-line"><span class="sc-line-label">기타</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:27%"></div></div><span class="sc-line-pts">+8</span></div>
+      </div>
+      <div class="sc-block">
+        <div class="sc-block-title">🏢 업종 <span>MAX 40pt</span></div>
+        <div class="sc-line"><span class="sc-line-label">반려동품 / 펫케어</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:100%"></div></div><span class="sc-line-pts">+40</span></div>
+        <div class="sc-line"><span class="sc-line-label">유통 / 무역</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:75%"></div></div><span class="sc-line-pts">+30</span></div>
+        <div class="sc-line"><span class="sc-line-label">제약 / 수의</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:63%"></div></div><span class="sc-line-pts">+25</span></div>
+        <div class="sc-line"><span class="sc-line-label">화장품</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:55%"></div></div><span class="sc-line-pts">+22</span></div>
+        <div class="sc-line"><span class="sc-line-label">IT / 미디어 / 식품</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:45%"></div></div><span class="sc-line-pts">+18</span></div>
+        <div class="sc-line"><span class="sc-line-label">전시 / 이벤트</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:38%"></div></div><span class="sc-line-pts">+15</span></div>
+        <div class="sc-line"><span class="sc-line-label">기타</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:8%"></div></div><span class="sc-line-pts">+3</span></div>
+      </div>
+      <div class="sc-block">
+        <div class="sc-block-title">📬 연락처 <span>MAX 25pt</span></div>
+        <div class="sc-line"><span class="sc-line-label">이메일 보유</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:60%"></div></div><span class="sc-line-pts">+15</span></div>
+        <div class="sc-line"><span class="sc-line-label">전화번호 보유</span><div class="sc-line-bar"><div class="sc-line-fill" style="width:40%"></div></div><span class="sc-line-pts">+10</span></div>
+      </div>
+      <div class="sc-grade-row">
+        <div class="sc-grade-item" style="background:#ECFDF5;border:1.5px solid #6EE7B7">
+          <div class="sg-label" style="color:#065F46">🔥 높은 적합도</div>
+          <div class="sg-range" style="color:#059669">70점 이상</div>
+        </div>
+        <div class="sc-grade-item" style="background:#FFFBEB;border:1.5px solid #FCD34D">
+          <div class="sg-label" style="color:#92400E">⚡ 보통 적합도</div>
+          <div class="sg-range" style="color:#D97706">40 – 69점</div>
+        </div>
+        <div class="sc-grade-item" style="background:#FEF2F2;border:1.5px solid #FCA5A5">
+          <div class="sg-label" style="color:#991B1B">❌ 낮은 적합도</div>
+          <div class="sg-range" style="color:#DC2626">39점 이하</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── 수동 등록 모달 ── -->
 <div class="modal-overlay" id="add-modal" style="display:none;">
@@ -515,7 +495,6 @@ let state = {
   customNote: "",
   classifyResult: null,
   classifyOverrideType: null,
-  detailTarget: 'detail-panel',
 };
 let sortKey = 'priority'; // 'name' | 'country' | 'priority' | 'type'
 let sortDir = 1; // 1 = asc, -1 = desc
@@ -632,7 +611,6 @@ function copyText(text, btnId) {
 }
 
 function recommendNote() {
-  if (state.detailTarget !== 'rk-detail-panel') return '';
   return '<div class="recommend-note"><span class="rn-icon">✨</span><span><strong>영업 목적으로 가장 적합한 내용을 추천해 드렸어요!</strong><br>원하시는 목적으로 변경도 가능합니다.</span></div>';
 }
 
@@ -646,7 +624,7 @@ function init() {
   renderList();
   // 페이지 진입 시 항상 MEGAZOO가 선택된 상태로 시작
   selectEvent('megazoo');
-  switchTab('ranking');
+  renderGradeFilterChips();
 }
 
 function setSeason(v) {
@@ -701,25 +679,48 @@ function renderList() {
     return `<span class="stars">${[1,2,3,4,5].map(i=>`<span class="star ${i<=n?'on':'off'}">${i<=n?'★':'★'}</span>`).join('')}</span>`;
   }
 
-  document.getElementById("contact-list").innerHTML = filtered.map(c => {
-    const active = state.selected && state.selected.id===c.id;
-    const badge = typeBadgeHtml(c.type);
-    const score = c.score ?? classifyContact(c).score;
-    const stars = scoreToStars(score);
-    const sh = starsHtml(stars);
-    return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
-      <div class="ci-top">
-        <div class="ci-name">${c._new?'<span class="new-badge">NEW</span>':''}${esc(FLAGS[c.country]||"🌏")} ${esc(c.name||c.company)}</div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${sh}${badge}</div>
+  renderGradeFilterChips();
+  document.getElementById("contact-list").innerHTML = filtered.map(c => renderContactItem(c)).join("");
+}
+
+function renderContactItem(c) {
+  const active = state.selected && state.selected.id===c.id;
+  const badge = typeBadgeHtml(c.type);
+  const gr = c._grade || classifyContact(c).grade;
+  const sc = c._score ?? classifyContact(c).score;
+  const gradeLabel = {high:'🔥',mid:'⚡',low:'❌'}[gr]||'';
+  const dotClass = {high:'high',mid:'mid',low:'low'}[gr]||'';
+  return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
+    <div class="ci-top">
+      <div class="ci-name">${c._new?'<span class="new-badge">NEW</span>':''}${esc(FLAGS[c.country]||"🌏")} ${esc(c.name||c.company)}</div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <span class="ci-grade-dot ${dotClass}" title="${{high:'높은 적합도',mid:'보통 적합도',low:'낮은 적합도'}[gr]||''}"></span>
+        <span class="ci-score-num">${sc}pt</span>
+        ${badge}
       </div>
-      <div class="ci-company">${esc(c.company)}</div>
-      ${c.title?`<div class="ci-title">${esc(c.title)}</div>`:""}
-    </div>`;
-  }).join("");
+    </div>
+    <div class="ci-company">${esc(c.company)}</div>
+    ${c.title?`<div class="ci-title">${esc(c.title)}</div>`:""}
+  </div>`;
+}
+
+function renderGradeFilterChips() {
+  const all = contacts;
+  const high = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; c._grade=g; return g==='high';}).length;
+  const mid  = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; return g==='mid';}).length;
+  const low  = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; return g==='low';}).length;
+  const chips = [
+    {key:'all',  label:'전체',      cnt:all.length, cls:'active-all'},
+    {key:'high', label:'🔥 높은 적합도', cnt:high, cls:'active-high'},
+    {key:'mid',  label:'⚡ 보통',    cnt:mid,  cls:'active-mid'},
+    {key:'low',  label:'❌ 낮음',    cnt:low,  cls:'active-low'},
+  ];
+  const el = document.getElementById('grade-filter-chips');
+  if (!el) return;
+  el.innerHTML = chips.map(ch=>`<button class="gf-chip${gradeFilter===ch.key?' '+ch.cls:''}" onclick="setGradeFilter('${ch.key}')">${ch.label} <span class="gf-cnt">${ch.cnt}</span></button>`).join('');
 }
 
 function selectContact(id) {
-  state.detailTarget = "detail-panel";
   const c = contacts.find(x=>x.id===id);
   if (!c) return;
   state.selected = c;
@@ -799,7 +800,7 @@ function renderDetail() {
       </div>`
     : `<div class="no-purpose">위에서 <strong>발송 목적</strong>을 선택하면 이메일이 생성됩니다</div>`;
 
-  const _detailEl = document.getElementById(state.detailTarget || "detail-panel");
+  const _detailEl = document.getElementById("detail-panel");
   if (!_detailEl) return;
   _detailEl.innerHTML = `
     <div class="contact-card">
@@ -990,154 +991,14 @@ function confirmAdd() {
 // ── 시작 ─────────────────────────────────────────────────────────────────
 init();
 
-// ── 탭 전환 ─────────────────────────────────────────────────────────────
-var rkFilter = 'all';
-function switchTab(tab) {
-  document.getElementById('tab-email').style.display   = tab==='email'   ? 'flex' : 'none';
-  document.getElementById('tab-ranking').style.display = tab==='ranking' ? 'flex' : 'none';
-  document.getElementById('tab-btn-ranking').className = 'tab-btn' + (tab==='ranking'?' active':'');
-  document.getElementById('tab-btn-email').className   = 'tab-btn' + (tab==='email'?' active':'');
-  if (tab==='ranking') renderRanking();
-}
-function setRkFilter(f) { rkFilter=f; renderRankingCards(); }
+// ── 등급 필터 ─────────────────────────────────────────────────────────────
+var rkFilter = 'all'; // 하위 호환성
+var gradeFilter = 'all';
+function setGradeFilter(f) { gradeFilter=f; renderList(); }
 
-// ── 랭킹 전체 렌더 ────────────────────────────────────────────────────────
-function renderRanking() {
-  const scored = contacts.map(c => {
-    const r = classifyContact(c);
-    return {...c, _score:r.score, _grade:r.grade, _reasons:r.reasons, _sugType:r.suggestedType};
-  }).sort((a,b)=>b._score-a._score);
-  window._rkScored = scored;
-
-  const high = scored.filter(c=>c._grade==='high');
-  const mid  = scored.filter(c=>c._grade==='mid');
-  const low  = scored.filter(c=>c._grade==='low');
-  const total = scored.length;
-  const highPct = Math.round(high.length/total*100);
-  const midPct  = Math.round(mid.length/total*100);
-  const lowPct  = 100-highPct-midPct;
-
-  // ── 사이드바: 기준 설명 ──
-  function critLine(label, pts, max) {
-    return `<div class="crit-line">
-      <span class="crit-label">${label}</span>
-      <div class="crit-bar-bg"><div class="crit-bar-fill" style="width:${Math.round(pts/max*100)}%"></div></div>
-      <span class="crit-pts${pts===0?' muted':pts<=3?' muted':''}">${pts>0?'+'+pts:pts}</span>
-    </div>`;
-  }
-
-  const sidebar = `
-    <div>
-      <div class="rk-sidebar-title">채점 기준표</div>
-      <div class="rk-sidebar-sub">명함 ${total}장을 4가지 항목으로<br>자동 채점 → 우선순위 산정</div>
-    </div>
-    <div class="crit-block">
-      <div class="crit-block-title">👤 직함 <span>MAX 30pt</span></div>
-      ${critLine('대표 / CEO / Founder',30,30)}
-      ${critLine('이사 / Director / Manager',20,30)}
-      ${critLine('담당 / Specialist',12,30)}
-      ${critLine('기타',8,30)}
-    </div>
-    <div class="crit-block">
-      <div class="crit-block-title">🏭 업종 <span>MAX 40pt</span></div>
-      ${critLine('반려동물 / 펫케어',40,40)}
-      ${critLine('유통 / 무역',30,40)}
-      ${critLine('제약 / 수의',25,40)}
-      ${critLine('화장품',22,40)}
-      ${critLine('IT / 미디어 / 식품',18,40)}
-      ${critLine('전시 / 이벤트',15,40)}
-      ${critLine('기타 업종',3,40)}
-    </div>
-    <div class="crit-block">
-      <div class="crit-block-title">📋 연락처 <span>MAX 25pt</span></div>
-      ${critLine('이메일 보유',15,15)}
-      ${critLine('전화번호 보유',10,15)}
-      ${critLine('연락처 없음',0,15)}
-    </div>
-    <div class="crit-block">
-      <div class="crit-block-title">🎯 유형 분류 규칙</div>
-      <div class="type-rule"><span class="type-rule-badge" style="color:#15803D;background:#ECFDF5">📰 미디어</span><span class="type-rule-desc">미디어/언론·기자 직함</span></div>
-      <div class="type-rule"><span class="type-rule-badge" style="color:#C2410C;background:#FFF7ED">💼 바이어</span><span class="type-rule-desc">유통/무역/구매담당</span></div>
-      <div class="type-rule"><span class="type-rule-badge" style="color:#7E22CE;background:#FDF4FF">⭐ 스폰서</span><span class="type-rule-desc">대기업 or 고점수+α</span></div>
-      <div class="type-rule"><span class="type-rule-badge" style="color:#1D4ED8;background:#EEF6FF">🏪 부스</span><span class="type-rule-desc">제조/브랜드 (기본)</span></div>
-    </div>
-    <div style="margin-top:8px;padding:10px 12px;background:#242424;border-radius:8px;">
-      <div class="crit-block-title" style="margin-bottom:6px;">🏆 등급 기준</div>
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#059669;flex-shrink:0"></div>
-          <span style="font-size:10.5px;color:#D1D5DB;">높은 적합도 <strong style="color:#34D399">70점↑</strong></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>
-          <span style="font-size:10.5px;color:#D1D5DB;">보통 적합도 <strong style="color:#FCD34D">40~69점</strong></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0"></div>
-          <span style="font-size:10.5px;color:#D1D5DB;">낮은 적합도 <strong style="color:#FCA5A5">39점↓</strong></span>
-        </div>
-      </div>
-    </div>`;
-
-  // ── 메인 영역 ──
-  const summaryCards = `
-    <div class="grade-summary">
-      <div class="gs-card" style="background:#ECFDF5;border-color:#6EE7B7" onclick="setRkFilter('high')">
-        <div class="gs-count" style="color:#059669">${high.length}</div>
-        <div class="gs-label" style="color:#059669">✅ 높은 적합도</div>
-        <div class="gs-pts" style="color:#059669">70점 이상 · 즉시 컨택</div>
-      </div>
-      <div class="gs-card" style="background:#FFFBEB;border-color:#FCD34D" onclick="setRkFilter('mid')">
-        <div class="gs-count" style="color:#D97706">${mid.length}</div>
-        <div class="gs-label" style="color:#D97706">⚡ 보통 적합도</div>
-        <div class="gs-pts" style="color:#D97706">40~69점 · 검토 후 컨택</div>
-      </div>
-      <div class="gs-card" style="background:#FEF2F2;border-color:#FCA5A5" onclick="setRkFilter('low')">
-        <div class="gs-count" style="color:#DC2626">${low.length}</div>
-        <div class="gs-label" style="color:#DC2626">❌ 낮은 적합도</div>
-        <div class="gs-pts" style="color:#DC2626">39점 이하 · 우선순위 낮음</div>
-      </div>
-    </div>`;
-
-  const distBar = `
-    <div class="dist-bar-wrap">
-      <div class="dist-bar-label">전체 점수 분포 — 클릭하여 필터</div>
-      <div class="dist-bar-track">
-        <div class="dist-seg" style="width:${highPct}%;background:#059669" onclick="setRkFilter('high')">${highPct}%</div>
-        <div class="dist-seg" style="width:${midPct}%;background:#F59E0B" onclick="setRkFilter('mid')">${midPct}%</div>
-        <div class="dist-seg" style="width:${lowPct}%;background:#EF4444" onclick="setRkFilter('low')">${lowPct}%</div>
-      </div>
-      <div class="dist-legend">
-        <span class="dist-legend-item"><span class="dist-dot" style="background:#059669"></span>높은 적합도 ${high.length}명</span>
-        <span class="dist-legend-item"><span class="dist-dot" style="background:#F59E0B"></span>보통 적합도 ${mid.length}명</span>
-        <span class="dist-legend-item"><span class="dist-dot" style="background:#EF4444"></span>낮은 적합도 ${low.length}명</span>
-        <span class="dist-legend-item" style="margin-left:auto;cursor:pointer;color:#E8470A;font-weight:700" onclick="setRkFilter('all')">전체 보기</span>
-      </div>
-    </div>`;
-
-  document.getElementById('tab-ranking').innerHTML = `
-    <div class="rk-wrap">
-      <div class="rk-sidebar">${sidebar}</div>
-      <div class="rk-main">
-        <div class="rk-top">
-          <div class="rk-title">섭외 우선순위 분석 <span>${total}명</span></div>
-          <div class="rk-desc">카드를 클릭하면 우측에 상세 정보와 이메일 초안이 표시됩니다</div>
-        </div>
-        ${summaryCards}
-        ${distBar}
-        <div id="rk-cards"></div>
-      </div>
-      <div class="rk-detail" id="rk-detail-panel">
-        <div class="rk-detail-empty">
-          <div class="icon">📋</div>
-          <h3>연락처를 선택해 주세요</h3>
-          <p>좌측 랭킹 카드를 클릭하면<br>상세 정보와 이메일 초안이 표시됩니다</p>
-        </div>
-      </div>
-    </div>`;
-
-  renderRankingCards();
-}
+// ── 채점 기준 모달 ──────────────────────────────────────────────────────────
+function openScoringModal()  { document.getElementById('scoring-modal').style.display='flex'; }
+function closeScoringModal() { document.getElementById('scoring-modal').style.display='none'; }
 
 function renderRankingCards() {
   const scored = window._rkScored || [];
@@ -1186,34 +1047,7 @@ function renderSection(label, color, list) {
 }
 
 function goToContact(id) {
-  const c = contacts.find(x=>x.id===id);
-  if (!c) return;
-  state.detailTarget = 'rk-detail-panel';
-  state.selected = c;
-  state.purpose = c.type;
-  state.langOverride = 'auto';
-  state.customNote = '';
-  document.querySelectorAll('.rk-card').forEach(el => el.classList.remove('rk-card-active'));
-  const _ac = document.querySelector('.rk-card[onclick="goToContact(' + id + ')"]');
-  if (_ac) _ac.classList.add('rk-card-active');
-  renderDetail();
-}
-
-
-// ── 행사 선택 ─────────────────────────────────────────────────────
-function selectEvent(id) {
-  if (!SHOWS[id]) return;
-  state.event = id;
-  // 이미 선택된 시즌 유지 (행사 전환 시에만 첫 시즌으로 리셋)
-  const validSeason = SHOWS[id].seasons.find(s => s.key === state.season);
-  if (!validSeason) state.season = SHOWS[id].seasons[0].key;
-  // 칩 active 업데이트
-  Object.keys(SHOWS).forEach(k => {
-    const btn = document.getElementById('chip-' + k);
-    if (btn) btn.className = 'event-chip' + (k === id ? ' active' : '');
-  });
-  renderEventDetailBar();
-  if (state.selected && state.purpose) renderDetail();
+  selectContact(id);
 }
 
 // ── 행사 상세바 렌더 (Tier 3) ──────────────────────────────────────
