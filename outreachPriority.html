@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영업 대상 관리</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif; background: #F4F5F7; height: 100vh; overflow: hidden; }
+
+  /* ── 헤더 ── */
+  #header { background: #1A1A1A; height: 52px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  #header .logo { font-weight: 900; font-size: 17px; color: #E8470A; letter-spacing: 0.07em; }
+  #header .subtitle { color: #aaa; font-size: 12px; margin-left: 10px; }
+  #header .sep { color: #444; margin: 0 6px; }
+
+  /* ── 통계바 ── */
+  #statsbar { background: #fff; border-bottom: 1px solid #E5E7EB; padding: 7px 22px; display: flex; gap: 24px; overflow-x: auto; flex-shrink: 0; }
+  .stat-item { display: flex; gap: 5px; align-items: baseline; white-space: nowrap; }
+  .stat-label { font-size: 9.5px; color: #9CA3AF; font-weight: 700; }
+  .stat-value { font-size: 12.5px; color: #E8470A; font-weight: 700; }
+  .stat-value.purple { color: #7C3AED; }
+
+  /* ── 레이아웃 ── */
+  #main { display: flex; flex: 1; height: 100%; overflow: hidden; }
+
+  /* ── 왼쪽 패널 ── */
+  #left { width: 295px; border-right: 1px solid #E5E7EB; background: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+  #btn-row { padding: 10px 13px; border-bottom: 1px solid #F3F4F6; display: flex; gap: 6px; }
+  .btn-outline { flex: 1; padding: 8px; background: #fff; border: 1.5px solid #E8470A; border-radius: 8px; cursor: pointer; color: #E8470A; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .btn-solid { flex: 1; padding: 8px; background: linear-gradient(135deg, #E8470A, #F97316); border: none; border-radius: 8px; cursor: pointer; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  #search-box { padding: 10px 13px; border-bottom: 1px solid #F3F4F6; }
+  #search-box input { width: 100%; padding: 8px 10px; border: 1.5px solid #E5E7EB; border-radius: 7px; font-size: 12.5px; outline: none; }
+  #search-box input:focus { border-color: #E8470A; }
+  .filter-row { display: flex; gap: 5px; margin-top: 7px; }
+  .filter-row select { flex: 1; padding: 5px 6px; border: 1.5px solid #E5E7EB; border-radius: 6px; font-size: 11.5px; background: #F9FAFB; color: #374151; outline: none; }
+  #sort-row { display: flex; gap: 4px; padding: 6px 13px 8px; border-bottom: 1px solid #F3F4F6; flex-wrap: wrap; }
+  .sort-btn { font-size: 10.5px; padding: 3px 8px; border-radius: 12px; border: 1px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all .12s; white-space: nowrap; }
+  .sort-btn:hover { border-color: #E8470A; color: #E8470A; }
+  .sort-btn.active { background: #1A1A1A; color: #fff; border-color: #1A1A1A; font-weight: 700; }
+  .sort-btn .arrow { font-size: 9px; opacity: 0.7; }
+  /* ── 별점 우선순위 ── */
+  .stars { display:flex; gap:1px; flex-shrink:0; }
+  .star  { font-size:9px; line-height:1; }
+  .star.on  { color:#F59E0B; }
+  .star.off { color:#E5E7EB; }
+
+  #contact-list { flex: 1; overflow-y: auto; }
+  .contact-item { padding: 9px 13px; border-bottom: 1px solid #F9FAFB; cursor: pointer; border-left: 3px solid transparent; transition: background .1s; }
+  .contact-item:hover { background: #FFF9F7; }
+  .contact-item.active { background: #FFF4EE; border-left-color: #E8470A; }
+  .contact-item.is-new { background: #FAFFF4; border-left-color: #22C55E; }
+  .contact-item.active.is-new { background: #FFF4EE; border-left-color: #E8470A; }
+  .ci-top { display: flex; justify-content: space-between; gap: 4px; align-items: flex-start; }
+  .ci-name { font-weight: 600; font-size: 12px; color: #111827; }
+  .ci-company { font-size: 11px; color: #6B7280; margin-top: 2px; }
+  .ci-title { font-size: 10px; color: #9CA3AF; margin-top: 1px; }
+  .new-badge { font-size: 9px; background: #DCFCE7; color: #15803D; border-radius: 3px; padding: 1px 4px; margin-right: 4px; }
+  .type-badge { font-size: 9px; border-radius: 3px; padding: 1px 4px; white-space: nowrap; flex-shrink: 0; border: 1px solid; }
+
+  /* ── 오른쪽 패널 ── */
+  #right { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #9CA3AF; }
+  .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-state h3 { font-size: 14px; font-weight: 700; color: #374151; }
+  .empty-state p { font-size: 12px; margin-top: 5px; }
+  .lang-pills { display: flex; gap: 8px; margin-top: 20px; }
+  .lang-pill { background: #fff; border: 1px solid #E5E7EB; border-radius: 7px; padding: 8px 14px; font-size: 12px; color: #6B7280; }
+
+  /* 연락처 카드 */
+  .contact-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 9px; padding: 14px 16px; margin-bottom: 12px; }
+  .cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cc-name { font-weight: 700; font-size: 15px; color: #111827; }
+  .cc-company { color: #4B5563; font-size: 12px; margin-top: 2px; }
+  .cc-title { color: #9CA3AF; font-size: 11px; margin-top: 1px; }
+  .cc-meta { display: flex; gap: 10px; margin-top: 9px; flex-wrap: wrap; align-items: center; }
+  .cc-email, .cc-phone { font-size: 11px; color: #6B7280; }
+  .cc-note { font-size: 10.5px; color: #D97706; background: #FFFBEB; padding: 2px 6px; border-radius: 3px; border: 1px solid #FDE68A; }
+  .copy-mini { font-size: 9.5px; padding: 1px 5px; background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 3px; cursor: pointer; color: #374151; margin-left: 4px; }
+
+  /* 컨트롤 */
+  .section-label { font-size: 10.5px; font-weight: 700; color: #6B7280; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .controls-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: flex-start; }
+  .purpose-btns { flex: 1; min-width: 200px; }
+  .purpose-btns .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pill-btn { padding: 5px 11px; border-radius: 5px; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; font-size: 12px; cursor: pointer; transition: all .12s; }
+  .season-picker .btn-group { display: flex; gap: 5px; }
+  .season-picker .pill-btn { font-size: 11.5px; line-height: 1.4; text-align: center; }
+  .lang-row { margin-bottom: 12px; }
+  .lang-row .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .lang-btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; transition: all .12s; }
+  .lang-btn.active { border-color: #4338CA; background: #EEF2FF; color: #4338CA; font-weight: 700; }
+  .note-row { margin-bottom: 12px; }
+  .note-row input { width: 100%; padding: 8px 11px; border: 1.5px solid #E5E7EB; border-radius: 7px; font-size: 12.5px; outline: none; color: #1F2937; }
+  .note-row input:focus { border-color: #E8470A; }
+
+  /* 이메일 출력 */
+  .email-box { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 9px; overflow: hidden; }
+  .email-header { background: #F9FAFB; border-bottom: 1px solid #E5E7EB; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+  .email-header span { font-weight: 700; font-size: 12.5px; color: #111827; }
+  .copy-all-btn { padding: 5px 14px; background: #E8470A; color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 700; transition: background .15s; }
+  .copy-all-btn.done { background: #10B981; }
+  .email-body { padding: 13px 15px; }
+  .subject-row { display: flex; align-items: center; gap: 7px; margin-bottom: 11px; }
+  .row-label { font-size: 10px; font-weight: 700; color: #9CA3AF; width: 30px; flex-shrink: 0; }
+  .subject-box { flex: 1; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 5px; padding: 6px 9px; font-size: 12.5px; font-weight: 600; color: #111827; display: flex; justify-content: space-between; align-items: center; gap: 7px; }
+  .body-row { display: flex; gap: 7px; }
+  .body-row .row-label { padding-top: 4px; }
+  .body-pre { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 7px; padding: 11px 13px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; font-family: inherit; color: #1F2937; margin: 0; width: 100%; }
+  .copy-body-btn { margin-top: 7px; padding: 5px 12px; background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 5px; font-size: 11.5px; cursor: pointer; color: #374151; }
+  .no-purpose { background: #FFF4EE; border: 1.5px dashed #E8470A; border-radius: 9px; padding: 18px; text-align: center; color: #9A3412; font-size: 13px; }
+
+  /* ── 모달 공통 ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-box { background: #fff; border-radius: 14px; width: 100%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .modal-header h2 { font-weight: 700; font-size: 15px; color: #111827; }
+  .modal-header p { font-size: 11.5px; color: #9CA3AF; margin-top: 2px; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #9CA3AF; line-height: 1; }
+  .modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid #E5E7EB; display: flex; gap: 8px; justify-content: flex-end; align-items: center; background: #FAFAFA; flex-shrink: 0; }
+
+  /* ── 수동 등록 모달 ── */
+  #add-modal .modal-box { max-width: 560px; max-height: 90vh; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-field label { font-size: 10.5px; font-weight: 700; color: #6B7280; display: block; margin-bottom: 3px; }
+  .form-field input, .form-field select { width: 100%; padding: 7px 9px; border: 1.5px solid #E5E7EB; border-radius: 6px; font-size: 12.5px; outline: none; color: #111827; background: #fff; }
+  .form-field input:focus, .form-field select:focus { border-color: #E8470A; }
+  .analyze-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; margin-bottom: 14px; transition: background .15s; }
+  .analyze-btn.ready { background: #1A1A1A; color: #fff; }
+  .analyze-btn.disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+  /* 분류 결과 */
+  .result-box { border: 1.5px solid; border-radius: 10px; overflow: hidden; }
+  .result-grade { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .result-grade-label { font-weight: 700; font-size: 14px; }
+  .result-grade-desc { font-size: 11.5px; margin-top: 2px; opacity: 0.8; }
+  .result-score { text-align: right; }
+  .result-score .num { font-size: 26px; font-weight: 900; line-height: 1; }
+  .result-score .denom { font-size: 10px; opacity: 0.7; }
+  .result-detail { padding: 12px 16px; background: #fff; }
+  .result-reasons { margin-bottom: 12px; }
+  .reason-tag { font-size: 11px; background: #F3F4F6; color: #374151; padding: 3px 8px; border-radius: 10px; display: inline-block; margin: 2px; }
+  .result-role { border-radius: 8px; padding: 10px 12px; border: 1px solid; display: flex; align-items: center; justify-content: space-between; }
+  .role-label { font-size: 10.5px; font-weight: 700; color: #6B7280; margin-bottom: 3px; }
+  .role-name { font-weight: 700; font-size: 14px; }
+  .role-reason { font-size: 11px; margin-top: 2px; opacity: 0.8; }
+  .role-alts { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+  .role-alt-btn { font-size: 10.5px; padding: 3px 8px; background: #fff; border-radius: 4px; cursor: pointer; border: 1px solid; }
+
+  .btn-cancel { padding: 7px 16px; background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 7px; cursor: pointer; font-size: 13px; color: #374151; }
+  .btn-add { padding: 7px 18px; background: #E8470A; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; }
+  .btn-add.disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+
+  /* ── 탭 ── */
+  #tab-bar { display: flex; border-bottom: 1px solid #E5E7EB; background: #fff; flex-shrink: 0; }
+  .tab-btn { padding: 10px 18px; font-size: 13px; font-weight: 600; color: #9CA3AF; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .tab-btn.active { color: #E8470A; border-bottom-color: #E8470A; }
+  #tab-email { display: flex; height: calc(100vh - 112px); }
+  /* ── 랭킹 탭 ── */
+  #tab-ranking { display: none; height: calc(100vh - 112px); background: #F4F5F7; }
+  .rk-wrap { display: flex; height: 100%; }
+
+  /* 사이드바 */
+  .rk-sidebar { width: 270px; flex-shrink:0; background:#1A1A1A; overflow-y:auto; padding:18px 16px; display:flex; flex-direction:column; gap:14px; }
+  .rk-sidebar-title { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#E8470A; }
+  .rk-sidebar-sub { font-size:10px; color:#6B7280; line-height:1.5; }
+  .crit-block { background:#242424; border-radius:8px; padding:11px 13px; }
+  .crit-block-title { font-size:9.5px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px; display:flex; justify-content:space-between; }
+  .crit-block-title span { color:#E8470A; font-weight:800; }
+  .crit-line { display:flex; align-items:center; gap:7px; padding:3.5px 0; border-bottom:1px solid #2e2e2e; }
+  .crit-line:last-child { border-bottom:none; }
+  .crit-label { font-size:10px; color:#D1D5DB; flex:0 0 140px; }
+  .crit-bar-bg { flex:1; height:3px; background:#333; border-radius:2px; overflow:hidden; }
+  .crit-bar-fill { height:100%; background:#E8470A; border-radius:2px; }
+  .crit-pts { font-size:10.5px; font-weight:700; color:#E8470A; min-width:28px; text-align:right; }
+  .crit-pts.green { color:#34D399; }
+  .crit-pts.muted { color:#4B5563; }
+  .type-rule { display:flex; align-items:center; gap:7px; padding:4px 0; border-bottom:1px solid #2e2e2e; }
+  .type-rule:last-child { border-bottom:none; }
+  .type-rule-badge { font-size:9.5px; padding:2px 6px; border-radius:4px; font-weight:700; white-space:nowrap; }
+  .type-rule-desc { font-size:10px; color:#9CA3AF; }
+
+  /* 메인 */
+  .rk-main { flex:1; overflow-y:auto; padding:18px 20px; }
+  .rk-top { margin-bottom:14px; }
+  .rk-title { font-size:16px; font-weight:800; color:#111827; }
+  .rk-title span { color:#E8470A; }
+  .rk-desc { font-size:11px; color:#9CA3AF; margin-top:2px; }
+
+  /* 요약 카드 */
+  .grade-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .gs-card { border-radius:9px; padding:12px 14px; border:1.5px solid; cursor:pointer; transition:transform .12s, box-shadow .12s; }
+  .gs-card:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
+  .gs-count { font-size:26px; font-weight:900; line-height:1; }
+  .gs-label { font-size:11px; font-weight:700; margin-top:3px; }
+  .gs-pts { font-size:10px; margin-top:2px; opacity:.75; }
+
+  /* 분포 바 */
+  .dist-bar-wrap { background:#fff; border:1px solid #E5E7EB; border-radius:9px; padding:12px 16px; margin-bottom:16px; }
+  .dist-bar-label { font-size:10px; font-weight:700; color:#6B7280; margin-bottom:7px; text-transform:uppercase; letter-spacing:.04em; }
+  .dist-bar-track { display:flex; height:26px; border-radius:5px; overflow:hidden; }
+  .dist-seg { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; cursor:pointer; transition:opacity .15s; }
+  .dist-seg:hover { opacity:.82; }
+  .dist-legend { display:flex; gap:12px; margin-top:7px; flex-wrap:wrap; }
+  .dist-legend-item { font-size:10.5px; color:#6B7280; display:flex; align-items:center; gap:4px; }
+  .dist-dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+
+  /* 카드 리스트 */
+  .rk-section-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin:14px 0 7px; display:flex; align-items:center; gap:5px; }
+  .rk-card { background:#fff; border:1px solid #E5E7EB; border-radius:9px; padding:10px 13px; margin-bottom:5px; display:grid; grid-template-columns:26px 1fr 80px 88px auto; align-items:center; gap:10px; cursor:pointer; transition:background .1s, box-shadow .1s; }
+  .rk-card:hover { background:#FFF9F7; box-shadow:0 2px 8px rgba(232,71,10,.08); }
+  .rk-rank { font-size:12px; font-weight:900; color:#D1D5DB; text-align:center; }
+  .rk-rank.gold   { color:#F59E0B; }
+  .rk-rank.silver { color:#9CA3AF; }
+  .rk-rank.bronze { color:#B45309; }
+  .rk-name { font-size:12px; font-weight:700; color:#111827; }
+  .rk-company { font-size:10px; color:#9CA3AF; margin-top:1px; }
+  .rk-score-col { display:flex; flex-direction:column; gap:3px; }
+  .rk-score-num { font-size:17px; font-weight:900; line-height:1; }
+  .rk-score-bar-bg { width:100%; height:3px; background:#F3F4F6; border-radius:2px; overflow:hidden; }
+  .rk-score-bar-fill { height:100%; border-radius:2px; }
+  .rk-type-badge { font-size:9.5px; padding:3px 7px; border-radius:4px; font-weight:700; border:1px solid; white-space:nowrap; display:inline-block; text-align:center; }
+  .rk-tags { display:flex; flex-wrap:wrap; gap:3px; justify-content:flex-end; }
+  .rk-tag { font-size:9px; background:#F3F4F6; color:#6B7280; padding:2px 5px; border-radius:5px; }
+
+
+  /* ── 3단 헤더 ── */
+  #app-title-bar { background:#111; height:46px; padding:0 20px; display:flex; align-items:center; gap:10px; flex-shrink:0; border-bottom:1px solid #222; }
+  .app-title { font-size:16px; font-weight:900; color:#fff; letter-spacing:-.02em; }
+  .app-title-sep { color:#444; }
+  .app-subtitle { font-size:11px; color:#666; flex:1; }
+  .db-badge { font-size:10px; background:#222; color:#888; border:1px solid #333; border-radius:10px; padding:2px 8px; }
+
+  #event-chip-bar { background:#1A1A1A; padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; border-bottom:1px solid #2a2a2a; min-height:40px; }
+  .event-chip { padding:5px 14px; border-radius:20px; border:1.5px solid #444; background:#2a2a2a; color:#aaa; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .event-chip:hover { border-color:#888; color:#ddd; }
+  .event-chip.active { background:#E8470A; border-color:#E8470A; color:#fff; box-shadow:0 0 0 2px rgba(232,71,10,.25); }
+  .chip-placeholder { padding:5px 14px; border-radius:20px; border:1.5px dashed #333; color:#444; font-size:11px; cursor:default; white-space:nowrap; }
+
+  #event-detail-bar { background:#fff; border-bottom:2px solid #F3F4F6; padding:7px 20px; display:flex; align-items:center; gap:0; flex-shrink:0; min-height:42px; overflow-x:auto; }
+  .ev-season-pill { padding:4px 12px; border-radius:14px; border:1.5px solid #E5E7EB; background:#fff; color:#6B7280; font-size:11px; font-weight:600; cursor:pointer; margin-right:6px; white-space:nowrap; line-height:1.35; transition:all .12s; }
+  .ev-season-pill.active { background:#FFF4EE; border-color:#E8470A; color:#E8470A; font-weight:700; }
+  .ev-season-date { font-size:9.5px; opacity:.7; font-weight:400; }
+  .ev-divider { width:1px; background:#E5E7EB; height:22px; margin:0 14px; flex-shrink:0; }
+  .ev-perf-label { font-size:9px; color:#E8470A; font-weight:800; margin-right:8px; white-space:nowrap; }
+  .ev-stat-item { display:flex; flex-direction:column; gap:1px; margin-right:16px; white-space:nowrap; }
+  .ev-stat-label { font-size:9px; color:#9CA3AF; font-weight:700; }
+  .ev-stat-value { font-size:12px; color:#111; font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- ── Tier 1: 제목부 ── -->
+<div id="app-title-bar">
+  <span class="app-title">영업 대상 관리</span>
+  <span class="app-title-sep">|</span>
+  <span class="app-subtitle">명함 DB 기반 행사별 섭외 분석 · 이메일 생성</span>
+  <span class="db-badge" id="db-count-badge">86명 DB</span>
+</div>
+
+<!-- ── Tier 2: 행사 칩 ── -->
+<div id="event-chip-bar">
+  <button class="event-chip active" id="chip-megazoo" onclick="selectEvent('megazoo')">🐾 MEGAZOO 2026</button>
+  <span class="chip-placeholder">＋ GOCAF 2026 <span style="opacity:.5;font-size:10px">준비중</span></span>
+  <span class="chip-placeholder">＋ KFARM 2026 <span style="opacity:.5;font-size:10px">준비중</span></span>
+</div>
+
+<!-- ── Tier 3: 행사 상세 (동적) ── -->
+<div id="event-detail-bar"></div>
+
+<!-- ── 탭 바 ── -->
+<div id="tab-bar">
+  <button class="tab-btn active" id="tab-btn-ranking" onclick="switchTab('ranking')">📊 섭외 우선순위</button>
+  <button class="tab-btn" id="tab-btn-email" onclick="switchTab('email')">✉️ 이메일 생성기</button>
+</div>
+
+<!-- ── 메인 ── -->
+<div id="tab-email">
+<div id="main">
+
+  <!-- 왼쪽 -->
+  <div id="left">
+    <div id="btn-row">
+      <button class="btn-outline" onclick="openAddModal()">✏️ 직접 입력</button>
+      <button class="btn-solid" onclick="alert('명함 스캔 기능은 Anthropic API 키 연결 시 사용 가능합니다.')">📇 명함 스캔</button>
+    </div>
+    <div id="search-box">
+      <input type="text" id="search-input" placeholder="🔍  이름 · 회사 · 업종" oninput="renderList()">
+      <div class="filter-row">
+        <select id="filter-type" onchange="renderList()">
+          <option>전체</option><option>부스</option><option>바이어</option><option>스폰서</option><option>미디어</option>
+        </select>
+        <select id="filter-country" onchange="renderList()"></select>
+      </div>
+      <div id="count-label"></div>
+      <div id="sort-row"></div>
+    </div>
+    <div id="contact-list"></div>
+  </div>
+
+  <!-- 오른쪽 -->
+  <div id="right">
+    <div class="empty-state" id="empty-state">
+      <div class="icon">✉️</div>
+      <h3>좌측에서 연락처를 선택하세요</h3>
+      <p>MEGAZOO 실제 데이터 기반 맞춤 이메일이 자동 생성됩니다</p>
+      <div class="lang-pills">
+        <span class="lang-pill">🇰🇷 한국어</span>
+        <span class="lang-pill">🇺🇸 English</span>
+        <span class="lang-pill">🇨🇳 中文</span>
+        <span class="lang-pill">🇯🇵 日本語</span>
+      </div>
+    </div>
+    <div id="detail-panel" style="display:none;"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /tab-email -->
+
+<div id="tab-ranking"></div>
+
+<!-- ── 수동 등록 모달 ── -->
+<div class="modal-overlay" id="add-modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><h2>✏️ 신규 연락처 등록</h2><p>정보 입력 후 영업 적합도 분석을 실행해 보세요</p></div>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>이름 *</label><input id="f-name" placeholder="홍길동 (Hong Gil Dong)"></div>
+        <div class="form-field"><label>회사명 *</label><input id="f-company" placeholder="(주)펫브랜드"></div>
+        <div class="form-field"><label>직함</label><input id="f-title" placeholder="대표이사 / CEO"></div>
+        <div class="form-field"><label>이메일</label><input id="f-email" type="email" placeholder="email@company.com"></div>
+        <div class="form-field"><label>전화번호</label><input id="f-phone" placeholder="010-0000-0000"></div>
+        <div class="form-field"><label>국가</label>
+          <select id="f-country">
+            <option>한국</option><option>중국</option><option>일본</option><option>대만</option>
+            <option>태국</option><option>베트남</option><option>인도네시아</option><option>필리핀</option>
+            <option>싱가포르</option><option>홍콩</option><option>미국</option><option>유럽/기타</option>
+          </select>
+        </div>
+        <div class="form-field"><label>업종</label>
+          <select id="f-industry">
+            <option>반려동물/펫케어</option><option>유통/무역</option><option>IT/기술</option>
+            <option>미디어/언론</option><option>제약/의료</option><option>화장품</option>
+            <option>전시/이벤트</option><option>물류/로직스</option><option>식품/F&B</option><option>교육/연구</option>
+            <option>제조업/포장재</option><option>관광/숙박</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-field"><label>언어</label>
+          <select id="f-lang">
+            <option>한국어</option><option>영어</option><option>중국어</option><option>일본어</option>
+            <option>한국어/영어</option><option>영어/중국어</option><option>영어/일본어</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field" style="margin-bottom:14px;">
+        <label>특이사항 (선택)</label>
+        <input id="f-note" placeholder="예: 일본 바이어 네트워크 보유, 동결건조 제품 관심 등" style="width:100%;padding:7px 9px;border:1.5px solid #E5E7EB;border-radius:6px;font-size:12.5px;outline:none;">
+      </div>
+      <button id="analyze-btn" class="analyze-btn disabled" onclick="runClassify()">🔍 영업 적합도 분석</button>
+      <div id="classify-result" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAddModal()">취소</button>
+      <button id="add-confirm-btn" class="btn-add disabled" onclick="confirmAdd()">등록</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 데이터 ────────────────────────────────────────────────────────────────
+const SHOWS = {
+  megazoo: {
+    id:'megazoo', name:'MEGAZOO 2026', emoji:'🐾', color:'#E8470A',
+    seasons:[
+      { key:'1', label:'S1 (Spring)', dates:'29–31 May 2026', venue:'KINTEX 2 (22,580㎡)' },
+      { key:'2', label:'S2 (Fall)',   dates:'20–22 Nov 2026', venue:'KINTEX 1 (42,930㎡)' }
+    ],
+    stats:{ visitors2025:"53,135", exhibitors2025:"579", booths2025:"1,175", matchMeetings:"843",
+            matchCompanies:"324", buyerCompanies:"111", consultationUSD:"29.2 Million USD",
+            database:"315,000", growthYoY:"+8.5%", overseasGrowth:"70%",
+            overseasVisitors2025:"4,082", countries2025:"40+" },
+    booth:{ spaceOnly:"USD 3,000", shellScheme:"USD 3,600" },
+    contact:{ tel:"+82-2-6121-6462", email:"megazoo.es@esgroup.net", web:"www.megazoo.co.kr/eng" },
+    market:{ size2027:"KRW 6.0 trillion", importUSD:"USD 337 million", importCountries:"45" }
+  }
+  /* 행사 추가 시 아래 블록을 복사해서 채우세요:
+  ,gocaf: { id:'gocaf', name:'GOCAF 2026', emoji:'⛺', color:'#2D6A4F',
+    seasons:[ { key:'1', label:'S1', dates:'TBD', venue:'TBD' } ],
+    stats:{}, booth:{}, contact:{}, market:{} }
+  ,kfarm: { id:'kfarm', name:'KFARM 2026', emoji:'🌾', color:'#7B6B3D',
+    seasons:[ { key:'1', label:'S1', dates:'TBD', venue:'TBD' } ],
+    stats:{}, booth:{}, contact:{}, market:{} }
+  */
+};
+
+const TYPE_COLORS = {
+  "부스":   {bg:"#EEF6FF",border:"#3B82F6",text:"#1D4ED8",label:"🏪 부스 참가"},
+  "바이어": {bg:"#FFF7ED",border:"#F97316",text:"#C2410C",label:"💼 빅 바이어"},
+  "스폰서": {bg:"#FDF4FF",border:"#A855F7",text:"#7E22CE",label:"⭐ 스폰서"},
+  "미디어": {bg:"#F0FDF4",border:"#22C55E",text:"#15803D",label:"📰 미디어"},
+};
+const FLAGS = {"한국":"🇰🇷","중국":"🇨🇳","일본":"🇯🇵","대만":"🇹🇼","태국":"🇹🇭","베트남":"🇻🇳","인도네시아":"🇮🇩","필리핀":"🇵🇭","싱가포르":"🇸🇬","홍콩":"🇭🇰"};
+
+let contacts = [
+  {id:1,name:"박진섭 (Justin Park)",company:"dfang",title:"Head Of Department",email:"ddco@ddco.co.kr",phone:"82-10-2749-2145",lang:"영어/한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:""},
+  {id:2,name:"Kate Park",company:"Fair Ground Incorporated",title:"President",email:"katepark0419@gmail.com",phone:"+63 917 628 3263",lang:"영어",country:"필리핀",industry:"유통/무역",type:"바이어",score:85,note:""},
+  {id:3,name:"강리아",company:"Cotton Dog Cork",title:"대표",email:"petgora@movercom.com",phone:"+82 10 4926 9996",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"이미지 각도 기울어짐, 일부 정보 불명확"},
+  {id:4,name:"전수민",company:"Born Baenaet",title:"대표 / 패션디자인학 박사",email:"born-0301@naver.com",phone:"010-8748-6476",lang:"한국어",country:"한국",industry:"미용/패션",type:"부스",score:58,note:"인스타그램: @bornbb_official"},
+  {id:5,name:"나진희 (JinHui Na)",company:"The Weekend Resort",title:"Sales & Marketing Manager",email:"jinhui.na@theweekandresort.com",phone:"+82 10 2216 5261",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:48,note:"인스타그램: theweekand_resort"},
+  {id:6,name:"권민서 (Kwon Min Seo)",company:"주식회사 오앤권",title:"대표이사 / CEO",email:"ritogato@naver.com",phone:"010-8750-3643",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
+  {id:7,name:"이재준",company:"KUDOS (큐더스 이노베이션)",title:"부사장",email:"jj@kudosinnovation.com",phone:"010-3118-4543",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:73,note:""},
+  {id:8,name:"윤지현",company:"페티그램",title:"대표이사",email:"9wol1@naver.com",phone:"010-5044-2201",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
+  {id:9,name:"손지현 (Ally Son)",company:"와이즈벨컴퍼니",title:"이사",email:"info@wisebell.co.kr",phone:"82 10 9983 8306",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:63,note:""},
+  {id:10,name:"신창환 (Shin Chang Hwan)",company:"대주산업주식회사",title:"펫영업본부장 / 부장",email:"happychang@daejuoinc.com",phone:"010-6533-3830",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:""},
+  {id:11,name:"이상휘 (WILLY)",company:"WLSV",title:"CEO",email:"willy@wlsv.kr",phone:"010-7456-4530",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
+  {id:12,name:"Denny Ku",company:"Sistar Indonesia",title:"Director",email:"denny@sistarcompany.com",phone:"+62 813 944 11002",lang:"영어",country:"인도네시아",industry:"유통/무역",type:"바이어",score:75,note:""},
+  {id:13,name:"김영선 (James Kim)",company:"S Global Inc.",title:"대표이사 / CEO",email:"sglobal@sglobalcorp.com",phone:"010-3318-3701",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:80,note:""},
+  {id:14,name:"홍성균",company:"Super Paw",title:"CEO",email:"skhong@superpaw.co.kr",phone:"010-5436-5403",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"인스타그램: @superpaw_kr"},
+  {id:15,name:"윤영린 (Casey Yooun)",company:"BITE ME",title:"Global Business Development",email:"younglin@biteme.co.kr",phone:"010-2674-5104",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:73,note:""},
+  {id:16,name:"허준",company:"멍멍이대학",title:"",email:"doggyuniv@gmail.com",phone:"010-3833-4607",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:73,note:"정보 제한적"},
+  {id:17,name:"김성열 (Scott Kim)",company:"STEMPOINT",title:"경영지원관리부 / 부장",email:"scott@stempoint.co.kr",phone:"010-5219-1965",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:63,note:""},
+  {id:18,name:"Zhenzhu Cao",company:"DogspaX Pet Washing & Grooming Products Ltd",title:"G.M",email:"DogspaX@gmail.com",phone:"139 0385 7509",lang:"영어/중국어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
+  {id:19,name:"박정환",company:"베트남-코리아 비즈니스센터",title:"회장",email:"parhjh@naver.com",phone:"(84) 334-624-154 (VN) / (82) 10-5235-0142 (KR)",lang:"한국어/베트남어",country:"베트남(거주)",industry:"유통/무역",type:"바이어",score:85,note:"한국-베트남 교류"},
+  {id:20,name:"김호첨",company:"MIKKO",title:"대표이사",email:"mikko3@naver.com",phone:"010-3041-5754",lang:"한국어/일본어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"일본 판매처 있음"},
+  {id:21,name:"이예범",company:"NYX ENTERTAINMENT",title:"반려견 사업 팀장",email:"",phone:"010-8451-9084",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:48,note:"인스타그램: @photographer_mike98"},
+  {id:22,name:"Chaki H.K. Li",company:"Bejeweled Accessories / B.A. Creations Limited",title:"Project Officer",email:"chaki.hk@babejeweled.com",phone:"",lang:"영어",country:"홍콩",industry:"미용/패션",type:"바이어",score:38,note:"미국 LA 쇼룸도 있음"},
+  {id:23,name:"Adrian Lim",company:"LUNOJI",title:"Founder",email:"Adrian@lunoji.com",phone:"+65 8870 5979",lang:"영어/한국어",country:"싱가포르",industry:"반려동물/펫케어",type:"바이어",score:95,note:"메모: 싱가폴 바이어/셀러"},
+  {id:24,name:"Yu Naibo",company:"HAKA",title:"Product Manager",email:"edisonyuineast@outlook.com",phone:"+86 139 1182 2949",lang:"영어/중국어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:"WeChat 동일 번호"},
+  {id:25,name:"Urakami",company:"gift tank",title:"Executive Adviser",email:"info@gift-tank.com",phone:"080-3129-4168",lang:"한국어/일본어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:77,note:"이름 불명, 이미지 기울어짐"},
+  {id:26,name:"Chayaluck (Orn) Tummasiri",company:"Ketawa",title:"Managing Director",email:"ketawapet@gmail.com",phone:"+66-65-156-9554",lang:"영어/태국어",country:"태국",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
+  {id:27,name:"곽문지 (moonji)",company:"B stage (B6868)",title:"Dog Stage Scenarist / 펫영양관리사",email:"info@b-inc.jp",phone:"",lang:"일본어/한국어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:63,note:""},
+  {id:28,name:"Charinrat Wongsalangkul",company:"Peterrest Project",title:"Founder",email:"peterest.project@gmail.com",phone:"+669-5592-4691",lang:"영어/태국어",country:"태국",industry:"반려동물/펫케어",type:"바이어",score:95,note:"Pet Friendly Cafe/Hotel, 카카오톡: peterrest.project"},
+  {id:29,name:"(중국어)",company:"中山市家源水族用品厂 (Zhongshan Jiayuan Aquarium Products Factory)",title:"",email:"annie_9080@163.com / zhangyong_mjy@163.com",phone:"13590963551 / 18948868080",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:73,note:"QQ: 904393504 / 핸드라이팅: A010 아쿠아(재료) / 이름 불명 / 'Aoi Orfiji' 오인식→수정"},
+  {id:30,name:"(중국어)",company:"石家庄贝农矿产品有限公司",title:"",email:"",phone:"15633119855",lang:"중국어",country:"중국",industry:"제조업",type:"바이어",score:21,note:""},
+  {id:31,name:"Chen Jacky",company:"Jiaxing Leyou Pet Products Co., Ltd.",title:"International Department Manager",email:"jacky@leyoupet.com",phone:"86-13736872826",lang:"영어/중국어",country:"중국",industry:"유통/무역",type:"바이어",score:75,note:"메모: 파란 볼펜 손글씨 메모 (내용 일부 판독 어려움)"},
+  {id:32,name:"Hui Zhirong",company:"江西海鼎智能科技有限公司 (HAIDING)",title:"销售经理 (Sales Manager)",email:"546443599@qq.com",phone:"151-8055-6699",lang:"중국어(간체)",country:"중국",industry:"IT/기술",type:"바이어",score:63,note:"중국 명함. 사무실전화 판독불가 | 메모: Do98 어떻해 (중국)"},
+  {id:33,name:"Gene Cheung (張振興)",company:"悅之竟貿易有限公司",title:"執行董事 (Executive Director)",email:"info@hopetcare.com",phone:"0976-152-176",lang:"중국어(번체)",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:85,note:"홍콩 연락처 손글씨 추가: +852-6110-5525 | 메모: p1132 HK, +852-6110-5525"},
+  {id:34,name:"Tzu Cheng Wang",company:"Pixel Lab",title:"業務總監 (영업총감)",email:"pixellabtaiwan@gmail.com",phone:"0930-829-028",lang:"중국어(번체)/영어",country:"대만",industry:"반려동물/펫케어",type:"미디어",score:73,note:""},
+  {id:35,name:"채유진",company:"우송대학교 (Woosong University)",title:"동물의료보건복지학부 교수",email:"amoteszruna@naver.com",phone:"010-3740-2942",lang:"한국어",country:"한국",industry:"교육/연구",type:"부스",score:45,note:"팩스: 042-630-9828"},
+  {id:36,name:"천정민 (Jeongmin Cheon)",company:"녹십자수의약품",title:"Sales Manager",email:"jeongmin.cheon@gcvp.co.kr",phone:"+82 10-5340-4872",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:70,note:""},
+  {id:37,name:"김가영",company:"(주)코스트코코리아",title:"매입/관리",email:"kykim@costcokr.com",phone:"010-2786-0639",lang:"한국어",country:"한국",industry:"유통/무역",type:"스폰서",score:63,note:"팩스: 02-2630-2640"},
+  {id:38,name:"김소연 (Soyeon Kim)",company:"LG유플러스",title:"Consumer부문 펫플랫폼트라이브 펫스페이스스쿼드 PO",email:"sonia@lguplus.co.kr",phone:"010 9901 3014",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"스폰서",score:55,note:"펫 플랫폼 부문 담당 / 오분류(페이지이엔지)→수정"},
+  {id:39,name:"송평화",company:"(주)평화글로벌로직스",title:"이사",email:"pgl526@naver.com",phone:"010-2313-0303",lang:"한국어",country:"한국",industry:"물류/로직스",type:"바이어",score:75,note:"팩스: 032-672-8383"},
+  {id:40,name:"박진용 (Park, Jin-Yong)",company:"(주)진용엔지니어링 (Jinyong Engineering co., Ltd.)",title:"대표이사 (C.E.O.)",email:"jyengcoo@naver.com",phone:"010-5422-2019",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:58,note:"팩스: 031-664-9252"},
+  {id:41,name:"박하현",company:"KAIST (한국과학기술원)",title:"문술미래전략대학원 (직책 불명확)",email:"phh1121@kaist.ac.kr",phone:"010-3737-2029",lang:"한국어",country:"한국",industry:"교육/연구",type:"부스",score:45,note:"기존 데이터(박준영/진영엔지니어링)는 완전 오류. 실제 KAIST 명함. 이름·직책 재확인 필요"},
+  {id:42,name:"박현호 (Park, Hyun Ho)",company:"(주)진용엔지니어링",title:"업무이사",email:"phn@jyeng.co",phone:"010-3737-2029",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:48,note:"팩스: 031-664-9252. 기존 \"원고우\"는 완전 오류"},
+  {id:43,name:"장수영 (Soo Yeong Jang)",company:"NEWS1 KOREA Co., Ltd.",title:"Reporter",email:"presy@news1.kr",phone:"+82-10-2598-1809",lang:"한국어/영어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:"동일 인물 앞뒤면"},
+  {id:44,name:"Li Fengyi",company:"Beijing Four Principles International Trade Co., Ltd",title:"General Manager",email:"lifengyi2014@126.com",phone:"+86-15311713051",lang:"영어/중국어",country:"중국",industry:"유통/무역",type:"바이어",score:75,note:""},
+  {id:45,name:"Todd Wan Lee",company:"ROSETTE EXPO INC.",title:"전시사업팀 부장",email:"todd.lee@rstexpo.co.kr",phone:"010-4174-2124",lang:"한국어/영어",country:"한국",industry:"전시/이벤트",type:"부스",score:60,note:""},
+  {id:46,name:"정지영 (Jung Ji Young)",company:"JungJiYoung Coffee Roasters",title:"",email:"jungjiyoungcoffee@gmail.com",phone:"+82 10 9150 4919",lang:"한국어/영어",country:"한국",industry:"식품/F&B",type:"부스",score:51,note:""},
+  {id:47,name:"구민지",company:"Korea Terrarium Association",title:"협회장",email:"koreaterrarium2021@naver.com",phone:"010-5403-5675",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"테라리움(파충류 등)"},
+  {id:48,name:"최서윤",company:"NEWS1",title:"해피펫팀 팀장 / 동물문화전문기자",email:"news1-1004@news1.kr",phone:"010-4193-7293",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:63,note:"반려동물 전문 기자"},
+  {id:49,name:"이수미 (Lee Sumi)",company:"K-웰니스뉴스",title:"기자",email:"betty1954@naver.com",phone:"010-8669-9894",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:""},
+  {id:50,name:"류난영 (Ryu Nan Young)",company:"NEWSIS",title:"편집국 금융·증권부 기자",email:"you@newsis.com",phone:"010-2060-8883",lang:"한국어/영어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:""},
+  {id:51,name:"Ning Ning",company:"Shandong Saixi Pet Food Co., Ltd",title:"Marketing Director",email:"",phone:"156 5321 0885",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:70,note:""},
+  {id:52,name:"Zhu Yongpei",company:"Shandong MarsBowl Biotechnology Co., Ltd",title:"Vice General Manager",email:"275041916@qq.com",phone:"159 6376 7818",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:"이름 불명"},
+  {id:53,name:"Lei Hong(蕾红)",company:"Shandong Xingcheng Pet Food Co., Ltd (STARPETS)",title:"International Trade Director",email:"",phone:"18763483631",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:70,note:"동일 인물 앞뒤면"},
+  {id:54,name:"Zhu Dongfang",company:"Shandong Zhichong Biotechnology Co., Ltd.",title:"",email:"standard.zrichco@bootleg.co.kr",phone:"015554955626",lang:"중국어",country:"중국",industry:"기타",type:"바이어",score:36,note:"일부 정보 불명확"},
+  {id:55,name:"조은주",company:"Gecko Land",title:"공동대표",email:"",phone:"010-6348-6734",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:43,note:""},
+  {id:56,name:"Jeong Po Won",company:"",title:"Breeder",email:"",phone:"010-6803-4403",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:58,note:""},
+  {id:57,name:"모 마녀",company:"",title:"",email:"",phone:"010-7656-6017",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:21,note:"Insta : @mo.witch"},
+  {id:58,name:"천재용",company:"",title:"",email:"",phone:"010-6418-5383",lang:"한국어",country:"한국",industry:"식품/F&B",type:"부스",score:36,note:"이름 불명확"},
+  {id:59,name:"홍종희 (HONG JONG HEE)",company:"",title:"",email:"",phone:"+82 010-3420-1050",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:21,note:"QR코드 포함"},
+  {id:60,name:"이정오",company:"이오하모니",title:"대표이사",email:"eoharmony22@gmail.com",phone:"010-3314-3023",lang:"한국어",country:"한국",industry:"식품/F&B",type:"부스",score:73,note:""},
+  {id:61,name:"차익주",company:"박영사",title:"콘텐츠 R&D팀 팀장",email:"mktking@pybook.co.kr",phone:"010-7105-5443",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:48,note:"빨간색 명함, 이름 불명"},
+  {id:62,name:"김미숙 (Kim Mi-Sug)",company:"한국식물레이아웃협회 KPLA",title:"",email:"ipp313@naver.com",phone:"01062199492",lang:"한국어/영어",country:"한국",industry:"유통/무역",type:"바이어",score:63,note:"이름 불명"},
+  {id:63,name:"송서형",company:"도마뱀스토리",title:"",email:"",phone:"010-5025-8835",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:21,note:"Instagram : @s_gecko_2008"},
+  {id:64,name:"이한구 (LEE HANGU)",company:"",title:"COO / 점장",email:"crebirdie@gmail.com",phone:"010-8073-2196",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:36,note:""},
+  {id:65,name:"양애경 (YANG AEKYUNG)",company:"",title:"CEO / 대표",email:"crebirdie@gmail.com",phone:"010-3000-1576",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:58,note:"이한구(_09)와 같은 회사/장소"},
+  {id:66,name:"Li Jinqi",company:"康维生物医药有限公司 (KANGWEI BIOLOGY)",title:"总经理 (총경리)",email:"qdkwsw@163.com",phone:"18363953298",lang:"중국어/영어",country:"중국",industry:"유통/무역",type:"바이어",score:63,note:""},
+  {id:67,name:"ZHENG LIJIAN",company:"NUOOU (诺欧)",title:"업무 담당",email:"sales@noropet.com",phone:"19527927613",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:77,note:"凍乾(동결건조) 펫푸드 전문 / 슬로건: 专注冻干 赋能品牌 / QR코드 있음(WeChat)"},
+  {id:68,name:"Ji Xueji",company:"山东迈旭生物科技有限公司",title:"业务经理 (영업매니저)",email:"",phone:"152 6464 8067",lang:"중국어",country:"중국",industry:"바이오/연구",type:"바이어",score:21,note:"핸드라이팅: E7585 / QR코드 있음(WeChat) / 브라질로 오분류→수정"},
+  {id:69,name:"Lison Lin",company:"榮麻國際股份有限公司 (Shenli International Design Co.,LTD.)",title:"執行長 / CEO",email:"lison@shenli2019.com",phone:"+886 912-608988",lang:"중국어/영어",country:"대만",industry:"디자인",type:"바이어",score:58,note:"QR코드 2개 포함"},
+  {id:70,name:"정재열 (Jae-Yuil Jung)",company:"주식회사 솔팩 (SOLPAC)",title:"기술영업부/전무이사",email:"jung@solpac.co.kr",phone:"010-5352-5715",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:48,note:"핸드라이팅: 스틱포장기(종근당) -> 츄르같은 간식용 포장"},
+  {id:71,name:"정기웅",company:"국제지속가능인증원 (IGSC)",title:"인증심사팀/팀장",email:"kiwoong.jung@igsc.kr",phone:"010-8809-1550",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:48,note:"카드 기울어져 연락처 일부 불명"},
+  {id:72,name:"김아현 (Kim A hyun)",company:"DOGLORY (도글로리)",title:"General Manager",email:"doglory@naver.com",phone:"010-5728-8289",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:"팩스: 02-2272-2146 / 핸드라이팅: 3E609 강아지 미용구 스트레스"},
+  {id:73,name:"",company:"POOP OUT",title:"",email:"",phone:"",lang:"중국어/영어",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:48,note:"이름 불명 / 2023 GOLD Awards, 2021 SELECT USA No.3 Tech Award / 뒷면만 촬영됨"},
+  {id:74,name:"Jonathan J. Lee",company:"PT. Indowooyang",title:"Director",email:"",phone:"+62-813-9297-4634",lang:"영어",country:"인도네시아",industry:"유통/무역",type:"바이어",score:60,note:"카드 기울어져 일부 정보 불명"},
+  {id:75,name:"Terry Lu",company:"M.Style Japan Corp. (BI-SU)",title:"International Business Department Division Director",email:"terry-lu@mstyle-j.co.jp",phone:"+(0)92-406-4564",lang:"영어/일본어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:85,note:"팩스: +81(0)92-406-4565 / BI-SU 브랜드 카드"},
+  {id:76,name:"Lewis Lin",company:"WONSON TAIWAN INC.",title:"General Manager",email:"lewis@wonson.com.tw",phone:"0935-768-884",lang:"중국어/영어",country:"대만",industry:"유통/무역",type:"바이어",score:75,note:"팩스: 02-2563-3340"},
+  {id:77,name:"Alyssa Wu",company:"BLUEBERRY",title:"Managing Director",email:"taiwanblueberry@gmail.com",phone:"886989218782",lang:"영어/중국어",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:85,note:"SELECT SHOP FOR PETS 추정 / 카드 하단 정보 가려져 연락처 불명"},
+  {id:78,name:"노영주 (Noh Young Ju)",company:"DALIAN ZHIHUI FISHERY GROUP CO.,LTD",title:"한국지사 대표",email:"nyj1328@naver.com",phone:"010-8286-6865",lang:"한국어/중국어",country:"중국",industry:"식품/F&B",type:"바이어",score:73,note:"황금색 카드 / 뒤집혀 있어 이름 불명 / 팩스: 02-555-4052"},
+  {id:79,name:"이준범 (Lee Junbeom)",company:"코스맥스㈜ COSMAX",title:"HC Lab. 3팀 / 연구원",email:"junbeom.lee@cosmax.com",phone:"010-3692-7914",lang:"한국어",country:"한국",industry:"화장품",type:"스폰서",score:55,note:"회전 촬영"},
+  {id:80,name:"김보은",company:"코스맥스㈜ COSMAX",title:"HC3 / 책임연구원",email:"bekim@cosmax.com",phone:"010-9728-8907",lang:"한국어",country:"한국",industry:"화장품",type:"스폰서",score:55,note:"회전 촬영, 이름 미확인"},
+  {id:81,name:"김유라 (Yura Kim)",company:"코스맥스펫㈜ COSMAXPET",title:"마케팅팀 전략파트 / 매니저",email:"yura.kim@cosmax.com",phone:"010-8661-3793",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"스폰서",score:73,note:"회전 촬영"},
+  {id:82,name:"신상우",company:"수협중앙회 K-FISH",title:"방콕무역지원센터/과장",email:"kfishbkk@gmail.com",phone:"+66-98-926-9337",lang:"한국어/영어",country:"태국",industry:"식품/F&B",type:"바이어",score:51,note:"회전 촬영, 한국 수산물 태국지사"},
+  {id:83,name:"박성용",company:"메타펫주식회사 (Metapet)",title:"대표이사",email:"ceo@metapetcorp.com",phone:"010-6795-1825",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"회전 촬영"},
+  {id:84,name:"최종권 (CHOE JONG KWON)",company:"CTCBIO VIET NAM",title:"Pet Division Manager (펫사업부장)",email:"jk@petlike.com.vn",phone:"+84-934-840-724",lang:"영어",country:"베트남",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
+  {id:85,name:"Luu Thi Ngoc Lan (Ms Lanny)",company:"Fusion Group™",title:"Purchasing Department",email:"lanltn@fusiongroup.vn",phone:"+84-975-571-495",lang:"영어",country:"베트남",industry:"식품/F&B",type:"바이어",score:51,note:"QR코드 있음"},
+  {id:86,name:"이상연 (Sean Lee)",company:"구룸 (shopguroom.com)",title:"Cofounder",email:"info@shopguroom.com",phone:"",lang:"영어/한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:"Kakao: seans.lee01 | Instagram: @guroom.co"}
+];
+
+// ── 앱 상태 ───────────────────────────────────────────────────────────────
+let state = {
+  selected: null,
+  purpose: "",
+  event: "megazoo",
+  season: "1",
+  langOverride: "auto",
+  customNote: "",
+  classifyResult: null,
+  classifyOverrideType: null,
+};
+let sortKey = 'priority'; // 'name' | 'country' | 'priority' | 'type'
+let sortDir = 1; // 1 = asc, -1 = desc
+
+const SORT_OPTIONS = [
+  { key: 'priority', label: '섭외 우선순위', asc: '높은순', desc: '낮은순' },
+  { key: 'name',     label: '이름',         asc: 'A→Z',   desc: 'Z→A'   },
+  { key: 'country',  label: '국가',         asc: 'A→Z',   desc: 'Z→A'   },
+  { key: 'type',     label: '유형',         asc: '부스→미디어', desc: '미디어→부스' },
+];
+
+function setSort(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = 1; }
+  renderSortRow();
+  renderList();
+}
+
+function renderSortRow() {
+  document.getElementById('sort-row').innerHTML = SORT_OPTIONS.map(o => {
+    const active = sortKey === o.key;
+    const arrow = active ? (sortDir === 1 ? '↑' : '↓') : '';
+    return `<button class="sort-btn${active?' active':''}" onclick="setSort('${o.key}')">
+      ${o.label}${active?` <span class="arrow">${arrow}</span>`:''}
+    </button>`;
+  }).join('');
+}
+
+// ── 분류 엔진 ─────────────────────────────────────────────────────────────
+function classifyContact(f) {
+  let score = f.score ?? 0; const reasons = [];
+  const t = (f.title||"").toLowerCase(), ind = (f.industry||"").toLowerCase(), co = (f.company||"").toLowerCase();
+  if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { score+=30; reasons.push("의사결정권자"); }
+  else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t)) { score+=20; reasons.push("중간관리자"); }
+  else if (/담당|coordinator|executive|specialist/.test(t)) { score+=12; reasons.push("실무 담당자"); }
+  else { score+=8; }
+  if (/반려동물|펫|pet/.test(ind)) { score+=40; reasons.push("핵심 타겟 업종"); }
+  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=30; reasons.push("유통/무역 업종"); }
+  else if (/제약|의료|헬스|health|pharma|수의/.test(ind)) { score+=25; reasons.push("헬스케어 관련"); }
+  else if (/화장품|코스메틱|cosmet/.test(ind)) { score+=22; reasons.push("뷰티/코스메틱"); }
+  else if (/it|기술|tech|통신/.test(ind)) { score+=18; reasons.push("IT/기술 업종"); }
+  else if (/미디어|언론|media|광고|방송/.test(ind)) { score+=18; reasons.push("미디어 업종"); }
+  else if (/식품|food|건강|영양/.test(ind)) { score+=18; reasons.push("식품 관련"); }
+  else if (/전시|이벤트|expo|fair/.test(ind)) { score+=15; reasons.push("전시/이벤트"); }
+  else { score+=3; reasons.push("관련도 낮은 업종"); }
+  if (f.email) { score+=15; reasons.push("이메일 보유"); }
+  if (f.phone) { score+=10; reasons.push("연락처 보유"); }
+  const grade = score>=70?"high":score>=40?"mid":"low";
+  let suggestedType="부스", typeReason="제조/브랜드 업체로 부스 참가 적합";
+  const isBigCo = /lg|삼성|현대|롯데|sk|cj|카카오|네이버|쿠팡|아모레|애경|lotte|hyundai|samsung|purina|mars|royal canin/.test(co);
+  if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자로 파트너십 적합"; }
+  else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통/구매 담당으로 바이어 초청 적합"; }
+  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품/.test(ind))) { suggestedType="스폰서"; typeReason="대기업 또는 높은 브랜드 파워로 스폰서 적합"; }
+  return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
+}
+
+// ── 이메일 생성 ───────────────────────────────────────────────────────────
+function generateEmail(contact, purpose, season, customNote) {
+  const lang = contact.lang || "";
+  const isKo = lang.includes("한국어");
+  const isCn = lang.includes("중국어") && !isKo;
+  const isJp = lang.includes("일본어") && !isKo;
+  const ev = SHOWS[state.event] || SHOWS.megazoo;
+  const s = ev.seasons.find(x=>x.key===season) || ev.seasons[0];
+  const sL = season==="1" ? "Season 1" : "Season 2";
+  const flag = FLAGS[contact.country]||"🌏";
+  const nm = contact.name||"";
+  const dname = nm.includes("(") ? (isKo||isJp ? nm.split("(")[0].trim() : (nm.match(/\(([^)]+)\)/)||[,""])[1]||nm) : nm;
+  const hon = isKo ? (/대표|CEO|회장|Founder|President|Director|General Manager/.test(contact.title||"")?"대표님":"님") : "";
+  const greeting = isKo ? `안녕하세요, ${dname} ${hon},` : isJp ? `${dname} 様\n\nお世話になっております。MEGAZOO 2026 事務局でございます。` : `Dear ${dname},`;
+  const ko_note = contact.note ? `\n\n💡 특이사항: ${contact.note}가 있어 글로벌 바이어 매칭 세션과 높은 시너지가 예상됩니다.` : "";
+  const en_note = contact.note ? `\n\n💡 Note: Given "${contact.note}", we expect strong synergy with our buyer matching sessions.` : "";
+  const cn_note = contact.note ? `\n\n备注：「${contact.note}」，相信与我们买家匹配项目能产生很大价值。` : "";
+  const jp_note = contact.note ? `\n\n※「${contact.note}」を踏まえ、グローバルバイヤーマッチングでのシナジーが期待できます。` : "";
+  const cm = customNote ? (isKo?`\n\n📝 메모: ${customNote}`:isJp?`\n\n📝 メモ：${customNote}`:isCn?`\n\n📝 备注：${customNote}`:`\n\n📝 Note: ${customNote}`) : "";
+  const C = ev.contact, ST = ev.stats, B = ev.booth;
+
+  if (purpose==="부스") {
+    if (isJp) return {subject:`【MEGAZOO 2026 ${sL}】${contact.company} 様 ブース出展のご招待`,body:`${greeting}\n\n韓国最大・国際認定ペット産業展 **MEGAZOO 2026 ${sL}** への出展をご招待申し上げます。\n\n📅 開催概要\n• 会期：${s.dates}\n• 会場：${s.venue}、KINTEX（高陽市）\n• 主催：KPFA　|　主管：MESSE ESANG\n• 後援：農林畜産食品部（政府公認・業界唯一）\n\n📊 2025年実績\n• 総来場者：${ST.visitors2025}名（前年比${ST.growthYoY}増）\n• 海外来場者：${ST.overseasVisitors2025}名（${ST.countries2025}ヶ国）— 前年比${ST.overseasGrowth}急増\n• 商談：${ST.matchMeetings}件 / 相談総額：${ST.consultationUSD}\n\n💼 Biz-Matching\n${ST.database}件DB基盤の1:1事前予約商談（購買/OEM/販売代理/輸出入 等）\n\n💡 ブース料金\n• スペースのみ：${B.spaceOnly}　• シェルスキーム：${B.shellScheme}${jp_note}${cm}\n\nご検討よろしくお願い申し上げます。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isKo) return {subject:`[MEGAZOO 2026 ${sL}] ${contact.company} 공식 부스 참가 초청`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 활동을 주목하여, 한국 최대 반려동물 산업 전시회 **MEGAZOO 2026 ${sL}**에 공식 부스 참가사로 초청드립니다.\n\n📅 행사 개요\n• 일정: ${s.dates}\n• 장소: ${s.venue}, KINTEX (고양시)\n• 주최: KPFA  |  주관: MESSE ESANG\n• 후원: 농림축산식품부 ★ 정부 공식 후원 (업계 유일)\n\n📊 MEGAZOO 2025 실적\n• 총 방문객: ${ST.visitors2025}명 (전년비 ${ST.growthYoY})\n• 해외 방문객: ${ST.overseasVisitors2025}명 (${ST.countries2025}개국) — 전년비 ${ST.overseasGrowth} 급증\n• 비즈 매칭: ${ST.matchMeetings}건 / 상담액 ${ST.consultationUSD}\n\n💼 Global Biz-Matching\n${ST.database}건 DB 기반 1:1 사전예약 미팅 (구매/OEM·ODM/유통/수출입 등 6가지 유형)\n\n💡 부스 참가 안내\n• Space Only: ${B.spaceOnly} (최소 24㎡)\n• Shell Scheme: ${B.shellScheme} (카펫·벽체·조명·책상·의자 포함)${ko_note}${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isCn) return {subject:`[MEGAZOO 2026 ${sL}] 诚邀 ${contact.company} 参展`,body:`${greeting}\n\n诚邀贵公司参加韩国最权威宠物产业展 **MEGAZOO 2026 ${sL}**。\n\n📅 展会概况\n• 日期：${s.dates}\n• 场地：${s.venue}，KINTEX\n• 后援：农林畜产食品部（政府唯一官方赞助）\n\n📊 2025年成绩\n• 参观者：${ST.visitors2025}（同比${ST.growthYoY}）\n• 海外：${ST.overseasVisitors2025}人 / ${ST.countries2025}国，同比+${ST.overseasGrowth}\n• 商务配对：${ST.matchMeetings}场 / ${ST.consultationUSD}${cn_note}${cm}\n\n如有兴趣，欢迎联系。\n\nMEGAZOO 2026 组委会\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[MEGAZOO 2026 ${sL}] Official Booth Invitation — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 organizing team.\n\nWe'd like to invite ${contact.company} to exhibit at **MEGAZOO 2026 ${sL}** — Korea's #1 internationally certified pet trade show, officially sponsored by Korea's Ministry of Agriculture, Food and Rural Affairs.\n\n📅 Show Details\n• Dates: ${s.dates}\n• Venue: ${s.venue}, KINTEX, Korea\n• Host: KPFA  |  Organizer: MESSE ESANG\n\n📊 2025 Performance\n• Total Visitors: ${ST.visitors2025} (${ST.growthYoY} YoY)\n• Overseas: ${ST.overseasVisitors2025} from ${ST.countries2025} countries (${ST.overseasGrowth} surge)\n• Biz-Matching: ${ST.matchMeetings} meetings | ${ST.consultationUSD}${contact.country!=="한국"?`\n• ${flag} Full support for international exhibitors from ${contact.country}`:""}${en_note}${cm}\n\n• Booth: Space Only ${B.spaceOnly} / Shell Scheme ${B.shellScheme}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+  }
+  if (purpose==="바이어") {
+    if (isJp) return {subject:`【MEGAZOO 2026 ${sL}】VIPバイヤー特別招待`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、**MEGAZOO 2026 ${sL}** VIPバイヤーとしてご招待申し上げます。\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP特典\n• 1:1事前予約商談（並ばず希望企業と直接面談）\n• ${ST.exhibitors2025}社カタログ事前閲覧\n• ${ST.database}件DB基盤マッチング\n• 2025実績：${ST.consultationUSD} / ${ST.matchMeetings}件${jp_note}${cm}\n\nご参加のご意向をお知らせください。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    if (isKo) return {subject:`[MEGAZOO 2026 ${sL}] VIP 바이어 초청 — 한국 펫 브랜드 우선 상담`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 ${contact.industry} 전문성을 고려하여 **MEGAZOO 2026 ${sL}** VIP 바이어로 특별 초청드립니다.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP 바이어 혜택\n• 1:1 사전 예약 미팅 (원하는 기업 선택, 대기 없이 바로 상담)\n• ${ST.exhibitors2025}개 참가사 카탈로그 사전 열람\n• ${ST.database}건 DB 기반 맞춤 매칭\n• 2025 실적: ${ST.consultationUSD} / ${ST.matchMeetings}건${ko_note}${cm}\n\n참관 의향을 알려주시면 VIP 초청장을 발송합니다.\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[MEGAZOO 2026 ${sL}] VIP Buyer Invitation — Korea's Premier Pet Trade Show`,body:`${greeting}\n\nI'm writing from MEGAZOO 2026 — Korea's largest, only internationally certified pet trade show.\n\nAs a key decision-maker at ${contact.company}, we'd like to extend a special **VIP Buyer Invitation**.\n\n📅 ${s.dates}  |  ${s.venue}, KINTEX, Korea\n\n🎯 VIP Benefits\n• 1:1 pre-scheduled meetings — choose who you meet, no queuing\n• Early access to ${ST.exhibitors2025} exhibitor catalog\n• Smart matching backed by ${ST.database}-entry database\n• 2025: ${ST.consultationUSD} in consultations across ${ST.matchMeetings} meetings${contact.country!=="한국"?`\n• ${flag} Travel/logistics support for buyers from ${contact.country}`:""}${en_note}${cm}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+  }
+  if (purpose==="스폰서") {
+    if (isJp) return {subject:`【MEGAZOO 2026】オフィシャルスポンサーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、MEGAZOO 2026 の **公式スポンサー** としてのご参加をご提案いたします。\n\n🏆 MEGAZOO の権威\n• 2013年以来 韓国最大ペット展 — AKEI唯一国際認定\n• 農林畜産食品部 政府公認後援（業界唯一）\n• 2025年 来場者${ST.visitors2025}名 / ${ST.countries2025}ヶ国\n\n⭐ スポンサー特典\n• 主要エリアへのブランド露出\n• セッションネーミング権 / 単独セミナースポンサー機会\n• ${ST.database}件DB基盤バイヤーマッチング優先配定${cm}\n\nご提案書をお送りできます。30分のお打ち合わせをお願いできますでしょうか。\n\nMEGAZOO 2026 スポンサーシップ事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    if (isKo) return {subject:`[MEGAZOO 2026] 공식 스폰서십 제안 — ${contact.company}`,body:`${greeting}\n\nMEGAZOO 2026 스폰서십 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 성과를 주목하며 공식 스폰서로 모시고자 제안드립니다.\n\n🏆 MEGAZOO 공신력\n• 2013년 이래 한국 최대 펫 전시 — AKEI 국제 공인 유일\n• 농림축산식품부 공식 후원 (업계 유일)\n• 2025년 방문객 ${ST.visitors2025}명 / ${ST.countries2025}개국\n\n⭐ 스폰서십 혜택\n• 전시장 주요 위치 브랜드 노출\n• 세션 네이밍권 / 전문가 세미나 단독 스폰서\n• ${ST.database}건 DB 기반 바이어 우선 매칭${cm}\n\n맞춤형 제안서를 준비해 드릴 수 있습니다. 30분 미팅을 요청드립니다.\n\nMEGAZOO 2026 스폰서십 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[MEGAZOO 2026] Official Sponsorship Proposal — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 Sponsorship Team.\n\nWe believe ${contact.company} would be an outstanding sponsor of Korea's most authoritative pet industry platform.\n\n🏆 Why MEGAZOO?\n• Korea's #1 pet show since 2013 — only AKEI-certified\n• Officially sponsored by Korea's Ministry of Agriculture (industry exclusive)\n• 2025: ${ST.visitors2025} visitors | ${ST.countries2025} countries${cm}\n\n⭐ Sponsorship Benefits\n• Prime brand visibility (entrance, main hall, all materials)\n• Session naming rights / exclusive seminar sponsorship\n• Priority buyer matching (${ST.database}-entry DB, ${ST.matchMeetings} real meetings)\n\nI'd love to share a tailored proposal. Can we find 30 minutes for a call?\n\nBest regards,\nMEGAZOO 2026 Sponsorship Team\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+  }
+  // 미디어
+  if (isJp) return {subject:`【MEGAZOO 2026】公式メディアパートナーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の専門性を評価し、MEGAZOO 2026 **公式メディアパートナー** としてのご協力をご提案いたします。\n\n📰 特典\n• 独占取材・優先インタビュー調整\n• 公式写真・映像素材の提供\n• 公式資料へのロゴ掲載${cm}\n\nMEGAZOO 2026 事務局\n✉️ ${C.email}`};
+  if (isKo) return {subject:`[MEGAZOO 2026] 공식 미디어 파트너 협력 제안 — ${contact.company}`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 반려동물 분야 전문성을 평가하여 **공식 미디어 파트너**로 협력을 제안드립니다.\n\n📰 미디어 파트너 혜택\n• 전시회 전·중·후 독점 취재 및 보도자료 우선 제공\n• CEO·바이어 인터뷰 우선 배정\n• 공식 자료·SNS 미디어 파트너 로고 표기${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+  return {subject:`[MEGAZOO 2026] Official Media Partnership — ${contact.company}`,body:`${greeting}\n\nWe'd like to invite ${contact.company} as an **Official Media Partner** for MEGAZOO 2026.\n\n📰 Benefits\n• Exclusive press access pre/during/post show\n• Priority CEO & buyer interview scheduling\n• Official photo/video assets + logo on all materials${cm}\n\nBest regards,\nMEGAZOO 2026 Press Office\n✉️ ${C.email}  |  🌐 ${C.web}`};
+}
+
+// ── 유틸 ─────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function typeBadgeHtml(type) {
+  const tc = TYPE_COLORS[type]||TYPE_COLORS["부스"];
+  return `<span class="type-badge" style="background:${tc.bg};color:${tc.text};border-color:${tc.border}">${tc.label}</span>`;
+}
+function copyText(text, btnId) {
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = "✓ 복사됨"; btn.classList.add("done");
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.remove("done"); }, 2000);
+  });
+}
+
+// ── 초기화 ────────────────────────────────────────────────────────────────
+function init() {
+  // 국가 필터 옵션
+  const countries = ["전체",...new Set(contacts.map(c=>c.country))];
+  const sel = document.getElementById("filter-country");
+  sel.innerHTML = countries.map(c=>`<option>${esc(c)}</option>`).join("");
+  renderSortRow();
+  renderList();
+  // 페이지 진입 시 항상 MEGAZOO가 선택된 상태로 시작
+  selectEvent('megazoo');
+  switchTab('ranking');
+}
+
+function setSeason(v) {
+  state.season = v;
+  renderEventDetailBar();
+  if (state.selected && state.purpose) renderDetail();
+}
+
+// ── 연락처 목록 렌더 ──────────────────────────────────────────────────────
+function renderList() {
+  const q = document.getElementById("search-input").value.toLowerCase();
+  const ft = document.getElementById("filter-type").value;
+  const fc = document.getElementById("filter-country").value;
+  let filtered = contacts.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q) || (c.industry||"").toLowerCase().includes(q)) &&
+    (ft==="전체" || c.type===ft) &&
+    (fc==="전체" || c.country===fc)
+  );
+
+  // 정렬
+  const TYPE_ORDER = {"부스":0,"바이어":1,"스폰서":2,"미디어":3};
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortKey === 'priority') {
+      va = a.score ?? classifyContact(a).score;
+      vb = b.score ?? classifyContact(b).score;
+      return (vb - va) * sortDir; // 높은 점수가 위
+    } else if (sortKey === 'name') {
+      va = a.name.replace(/\(.*\)/,'').trim();
+      vb = b.name.replace(/\(.*\)/,'').trim();
+      return va.localeCompare(vb, 'ko') * sortDir;
+    } else if (sortKey === 'country') {
+      va = a.country; vb = b.country;
+      return va.localeCompare(vb, 'ko') * sortDir;
+    } else if (sortKey === 'type') {
+      va = TYPE_ORDER[a.type] ?? 9;
+      vb = TYPE_ORDER[b.type] ?? 9;
+      return (va - vb) * sortDir;
+    }
+    return 0;
+  });
+  const shown = filtered.length, total = contacts.length;
+  document.getElementById("count-label").innerHTML =
+    `<span style="font-weight:600;color:#6B7280">${shown}</span>명 표시&ensp;/&ensp;전체 <span style="font-weight:600;color:#6B7280">${total}</span>명`;
+  document.getElementById("contact-count") && (document.getElementById("contact-count").textContent = total + "명");
+
+  // 별점: score → 1~5성 (70↑=5, 60↑=4, 45↑=3, 30↑=2, else=1)
+  function scoreToStars(score) {
+    return score>=70?5 : score>=60?4 : score>=45?3 : score>=30?2 : 1;
+  }
+  function starsHtml(n) {
+    return `<span class="stars">${[1,2,3,4,5].map(i=>`<span class="star ${i<=n?'on':'off'}">${i<=n?'★':'★'}</span>`).join('')}</span>`;
+  }
+
+  document.getElementById("contact-list").innerHTML = filtered.map(c => {
+    const active = state.selected && state.selected.id===c.id;
+    const badge = typeBadgeHtml(c.type);
+    const score = c.score ?? classifyContact(c).score;
+    const stars = scoreToStars(score);
+    const sh = starsHtml(stars);
+    return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
+      <div class="ci-top">
+        <div class="ci-name">${c._new?'<span class="new-badge">NEW</span>':''}${esc(FLAGS[c.country]||"🌏")} ${esc(c.name||c.company)}</div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${sh}${badge}</div>
+      </div>
+      <div class="ci-company">${esc(c.company)}</div>
+      ${c.title?`<div class="ci-title">${esc(c.title)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function selectContact(id) {
+  const c = contacts.find(x=>x.id===id);
+  if (!c) return;
+  state.selected = c;
+  state.purpose = c.type;
+  state.langOverride = "auto";
+  state.customNote = "";
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("detail-panel").style.display = "block";
+  renderList();
+  renderDetail();
+}
+
+// ── 상세 패널 렌더 ────────────────────────────────────────────────────────
+function renderDetail() {
+  const c = state.selected;
+  if (!c) return;
+  const tc = TYPE_COLORS[c.type]||TYPE_COLORS["부스"];
+
+  // 언어 자동 감지
+  const lang = c.lang||"";
+  const autoLang = lang.includes("한국어")?"ko":lang.includes("일본어")?"jp":lang.includes("중국어")?"cn":"en";
+  const autoLabel = {ko:"🇰🇷 한국어",jp:"🇯🇵 日本語",cn:"🇨🇳 中文",en:"🇺🇸 English"}[autoLang];
+
+  // effective contact (언어 override)
+  let eff = c;
+  if (state.langOverride !== "auto") {
+    const m = {ko:"한국어",en:"영어",cn:"중국어",jp:"일본어"};
+    eff = {...c, lang: m[state.langOverride]};
+  }
+
+  // 이메일 생성
+  const email = state.purpose ? generateEmail(eff, state.purpose, state.season, state.customNote) : null;
+
+  // purpose 버튼
+  const purposeBtns = ["부스","바이어","스폰서","미디어"].map(p => {
+    const t = TYPE_COLORS[p];
+    const active = state.purpose===p;
+    return `<button class="pill-btn" onclick="setPurpose('${p}')" style="${active?`border-color:${t.border};background:${t.bg};color:${t.text};font-weight:700`:`border-color:#E5E7EB`}">${t.label}</button>`;
+  }).join("");
+
+  // 시즌 버튼 (SHOWS 구조 기반)
+  const _ev = SHOWS[state.event] || SHOWS.megazoo;
+  const seasonBtns = _ev.seasons.map(({key,label,dates})=>{
+    const active = state.season===key;
+    return `<button class="pill-btn" onclick="setSeason('${key}')" style="${active?`border-color:#E8470A;background:#FFF4EE;color:#E8470A;font-weight:700`:`border-color:#E5E7EB`}">${label}<br><span style="font-size:10px;opacity:.7">${dates.split('–')[0]}–${dates.split(' ').slice(-1)[0]}</span></button>`;
+  }).join("");
+
+  // 언어 버튼
+  const langBtns = [["auto","🔄 자동"],["ko","🇰🇷 한국어"],["en","🇺🇸 English"],["cn","🇨🇳 中文"],["jp","🇯🇵 日本語"]].map(([v,l])=>{
+    const active = state.langOverride===v;
+    return `<button class="lang-btn${active?" active":""}" onclick="setLang('${v}')">${l}</button>`;
+  }).join("");
+
+  // 이메일 출력
+  const emailHtml = email
+    ? `<div class="email-box">
+        <div class="email-header">
+          <span>✉️ 생성된 이메일 초안</span>
+          <button class="copy-all-btn" id="copy-all-btn" onclick="copyText(${JSON.stringify(`제목: ${email.subject}\n\n${email.body}`)}, 'copy-all-btn')">전체 복사</button>
+        </div>
+        <div class="email-body">
+          <div class="subject-row">
+            <span class="row-label">제목</span>
+            <div class="subject-box">
+              <span>${esc(email.subject)}</span>
+              <button class="copy-mini" onclick="copyText(${JSON.stringify(email.subject)}, 'copy-subj-btn')" id="copy-subj-btn">복사</button>
+            </div>
+          </div>
+          <div class="body-row">
+            <span class="row-label">본문</span>
+            <div style="flex:1">
+              <pre class="body-pre">${esc(email.body)}</pre>
+              <button class="copy-body-btn" id="copy-body-btn" onclick="copyText(${JSON.stringify(email.body)}, 'copy-body-btn')">본문만 복사</button>
+            </div>
+          </div>
+        </div>
+      </div>`
+    : `<div class="no-purpose">위에서 <strong>발송 목적</strong>을 선택하면 이메일이 생성됩니다</div>`;
+
+  document.getElementById("detail-panel").innerHTML = `
+    <div class="contact-card">
+      <div class="cc-top">
+        <div>
+          <div class="cc-name">${esc(FLAGS[c.country]||"🌏")} ${esc(c.name)}</div>
+          <div class="cc-company">${esc(c.company)}</div>
+          ${c.title?`<div class="cc-title">${esc(c.title)}</div>`:""}
+        </div>
+        <span class="type-badge" style="background:${tc.bg};color:${tc.text};border-color:${tc.border};padding:3px 8px;font-size:11px">${tc.label}</span>
+      </div>
+      <div class="cc-meta">
+        ${c.email?`<span class="cc-email">📧 ${esc(c.email)}<button class="copy-mini" onclick="copyText('${esc(c.email)}','copy-email-btn')" id="copy-email-btn">복사</button></span>`:""}
+        ${c.phone?`<span class="cc-phone">📞 ${esc(c.phone)}</span>`:""}
+        ${c.note?`<span class="cc-note">💡 ${esc(c.note)}</span>`:""}
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="purpose-btns">
+        <div class="section-label">발송 목적</div>
+        <div class="btn-group">${purposeBtns}</div>
+      </div>
+      <div class="season-picker">
+        <div class="section-label">시즌</div>
+        <div class="btn-group">${seasonBtns}</div>
+      </div>
+    </div>
+
+    <div class="lang-row">
+      <div class="section-label">발송 언어 <span style="font-weight:400;text-transform:none;font-size:10px;color:#9CA3AF;margin-left:6px">자동 감지: ${autoLabel}</span></div>
+      <div class="btn-group">${langBtns}</div>
+    </div>
+
+    <div class="note-row">
+      <div class="section-label">추가 맞춤 메모 (선택)</div>
+      <input id="custom-note-input" value="${esc(state.customNote)}" placeholder="예: 지난 전시에서 만남, 특정 카테고리 관심 표명 등" oninput="setNote(this.value)">
+    </div>
+
+    ${emailHtml}
+  `;
+}
+
+function setPurpose(p) { state.purpose = p; renderDetail(); }
+function setLang(v) { state.langOverride = v; renderDetail(); }
+function setNote(v) { state.customNote = v; if (state.selected && state.purpose) renderDetail(); }
+
+// ── 수동 등록 모달 ────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById("add-modal").style.display = "flex";
+  document.getElementById("f-name").value = "";
+  document.getElementById("f-company").value = "";
+  document.getElementById("f-title").value = "";
+  document.getElementById("f-email").value = "";
+  document.getElementById("f-phone").value = "";
+  document.getElementById("f-note").value = "";
+  document.getElementById("f-country").value = "한국";
+  document.getElementById("f-industry").value = "반려동물/펫케어";
+  document.getElementById("f-lang").value = "한국어";
+  document.getElementById("classify-result").style.display = "none";
+  document.getElementById("add-confirm-btn").className = "btn-add disabled";
+  document.getElementById("add-confirm-btn").textContent = "등록";
+  updateAnalyzeBtn();
+  // 입력 변경시 분석 버튼 상태 갱신
+  ["f-name","f-company","f-title","f-email","f-phone","f-note"].forEach(id=>{
+    document.getElementById(id).oninput = ()=>{ document.getElementById("classify-result").style.display="none"; updateAnalyzeBtn(); updateAddBtn(); };
+  });
+  ["f-country","f-industry","f-lang"].forEach(id=>{
+    document.getElementById(id).onchange = ()=>{ document.getElementById("classify-result").style.display="none"; };
+  });
+}
+function closeAddModal() { document.getElementById("add-modal").style.display = "none"; }
+
+function updateAnalyzeBtn() {
+  const ok = document.getElementById("f-name").value.trim() && document.getElementById("f-company").value.trim();
+  const btn = document.getElementById("analyze-btn");
+  btn.className = "analyze-btn " + (ok?"ready":"disabled");
+}
+function updateAddBtn() {
+  const ok = document.getElementById("f-name").value.trim() && document.getElementById("f-company").value.trim();
+  const btn = document.getElementById("add-confirm-btn");
+  if (ok) { btn.className="btn-add"; } else { btn.className="btn-add disabled"; }
+}
+
+let _classifyResult = null;
+let _classifyType = null;
+
+function runClassify() {
+  const name = document.getElementById("f-name").value.trim();
+  const company = document.getElementById("f-company").value.trim();
+  if (!name || !company) return;
+  const form = {
+    name, company,
+    title: document.getElementById("f-title").value.trim(),
+    email: document.getElementById("f-email").value.trim(),
+    phone: document.getElementById("f-phone").value.trim(),
+    industry: document.getElementById("f-industry").value,
+  };
+  const r = classifyContact(form);
+  _classifyResult = r;
+  _classifyType = r.suggestedType;
+  renderClassifyResult(r);
+  updateAddBtn();
+}
+
+function setClassifyType(t) {
+  _classifyType = t;
+  renderClassifyResult(_classifyResult);
+}
+
+function renderClassifyResult(r) {
+  const GRADE = {
+    high:{color:"#059669",bg:"#ECFDF5",border:"#6EE7B7",label:"✅ 높은 적합도",desc:"적극 섭외 대상"},
+    mid: {color:"#D97706",bg:"#FFFBEB",border:"#FCD34D",label:"⚡ 보통 적합도",desc:"상황에 따라 섭외"},
+    low: {color:"#DC2626",bg:"#FEF2F2",border:"#FCA5A5",label:"❌ 낮은 적합도",desc:"우선순위 낮음"},
+  };
+  const gs = GRADE[r.grade];
+  const tc = TYPE_COLORS[_classifyType]||TYPE_COLORS["부스"];
+  const reasons = r.reasons.map(x=>`<span class="reason-tag">${esc(x)}</span>`).join("");
+  const altBtns = ["부스","바이어","스폰서","미디어"].filter(t=>t!==_classifyType).map(t=>{
+    const at = TYPE_COLORS[t];
+    return `<button class="role-alt-btn" onclick="setClassifyType('${t}')" style="border-color:${at.border};color:${at.text}">${t}로 변경</button>`;
+  }).join("");
+
+  document.getElementById("classify-result").style.display = "block";
+  document.getElementById("classify-result").innerHTML = `
+    <div class="result-box" style="border-color:${gs.border}">
+      <div class="result-grade" style="background:${gs.bg}">
+        <div>
+          <div class="result-grade-label" style="color:${gs.color}">${gs.label}</div>
+          <div class="result-grade-desc" style="color:${gs.color}">${gs.desc}</div>
+        </div>
+        <div class="result-score" style="color:${gs.color}">
+          <div class="num">${r.score}</div>
+          <div class="denom">/ 100점</div>
+        </div>
+      </div>
+      <div class="result-detail">
+        <div class="result-reasons">
+          <div class="section-label" style="margin-bottom:6px">점수 산정 이유</div>
+          ${reasons}
+        </div>
+        <div class="result-role" style="background:${tc.bg};border-color:${tc.border}">
+          <div>
+            <div class="role-label">추천 섭외 유형</div>
+            <div class="role-name" style="color:${tc.text}">${tc.label}</div>
+            <div class="role-reason" style="color:${tc.text}">${r.typeReason}</div>
+          </div>
+          <div class="role-alts">${altBtns}</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("add-confirm-btn").textContent = `✓ ${_classifyType}로 등록`;
+  document.getElementById("add-confirm-btn").className = "btn-add";
+}
+
+function confirmAdd() {
+  const name = document.getElementById("f-name").value.trim();
+  const company = document.getElementById("f-company").value.trim();
+  if (!name || !company) return;
+  const nextId = Math.max(...contacts.map(c=>c.id), 0) + 1;
+  const newContact = {
+    id: nextId,
+    name,
+    company,
+    title: document.getElementById("f-title").value.trim(),
+    email: document.getElementById("f-email").value.trim(),
+    phone: document.getElementById("f-phone").value.trim(),
+    country: document.getElementById("f-country").value,
+    industry: document.getElementById("f-industry").value,
+    lang: document.getElementById("f-lang").value,
+    note: document.getElementById("f-note").value.trim(),
+    type: _classifyType || "부스",
+    _new: true,
+  };
+  contacts.push(newContact);
+  // 국가 필터 업데이트
+  const countries = ["전체",...new Set(contacts.map(c=>c.country))];
+  const sel = document.getElementById("filter-country");
+  const cur = sel.value;
+  sel.innerHTML = countries.map(c=>`<option${c===cur?' selected':''}>${esc(c)}</option>`).join("");
+  closeAddModal();
+  renderList();
+  selectContact(nextId);
+}
+
+// ── 시작 ─────────────────────────────────────────────────────────────────
+init();
+
+// ── 탭 전환 ─────────────────────────────────────────────────────────────
+let rkFilter = 'all';
+function switchTab(tab) {
+  document.getElementById('tab-email').style.display   = tab==='email'   ? 'flex' : 'none';
+  document.getElementById('tab-ranking').style.display = tab==='ranking' ? 'block' : 'none';
+  document.getElementById('tab-btn-ranking').className = 'tab-btn' + (tab==='ranking'?' active':'');
+  document.getElementById('tab-btn-email').className   = 'tab-btn' + (tab==='email'?' active':'');
+  if (tab==='ranking') renderRanking();
+}
+function setRkFilter(f) { rkFilter=f; renderRankingCards(); }
+
+// ── 랭킹 전체 렌더 ────────────────────────────────────────────────────────
+function renderRanking() {
+  const scored = contacts.map(c => {
+    const r = classifyContact(c);
+    return {...c, _score:r.score, _grade:r.grade, _reasons:r.reasons, _sugType:r.suggestedType};
+  }).sort((a,b)=>b._score-a._score);
+  window._rkScored = scored;
+
+  const high = scored.filter(c=>c._grade==='high');
+  const mid  = scored.filter(c=>c._grade==='mid');
+  const low  = scored.filter(c=>c._grade==='low');
+  const total = scored.length;
+  const highPct = Math.round(high.length/total*100);
+  const midPct  = Math.round(mid.length/total*100);
+  const lowPct  = 100-highPct-midPct;
+
+  // ── 사이드바: 기준 설명 ──
+  function critLine(label, pts, max) {
+    return `<div class="crit-line">
+      <span class="crit-label">${label}</span>
+      <div class="crit-bar-bg"><div class="crit-bar-fill" style="width:${Math.round(pts/max*100)}%"></div></div>
+      <span class="crit-pts${pts===0?' muted':pts<=3?' muted':''}">${pts>0?'+'+pts:pts}</span>
+    </div>`;
+  }
+
+  const sidebar = `
+    <div>
+      <div class="rk-sidebar-title">채점 기준표</div>
+      <div class="rk-sidebar-sub">명함 ${total}장을 4가지 항목으로<br>자동 채점 → 우선순위 산정</div>
+    </div>
+    <div class="crit-block">
+      <div class="crit-block-title">👤 직함 <span>MAX 30pt</span></div>
+      ${critLine('대표 / CEO / Founder',30,30)}
+      ${critLine('이사 / Director / Manager',20,30)}
+      ${critLine('담당 / Specialist',12,30)}
+      ${critLine('기타',8,30)}
+    </div>
+    <div class="crit-block">
+      <div class="crit-block-title">🏭 업종 <span>MAX 40pt</span></div>
+      ${critLine('반려동물 / 펫케어',40,40)}
+      ${critLine('유통 / 무역',30,40)}
+      ${critLine('제약 / 수의',25,40)}
+      ${critLine('화장품',22,40)}
+      ${critLine('IT / 미디어 / 식품',18,40)}
+      ${critLine('전시 / 이벤트',15,40)}
+      ${critLine('기타 업종',3,40)}
+    </div>
+    <div class="crit-block">
+      <div class="crit-block-title">📋 연락처 <span>MAX 25pt</span></div>
+      ${critLine('이메일 보유',15,15)}
+      ${critLine('전화번호 보유',10,15)}
+      ${critLine('연락처 없음',0,15)}
+    </div>
+    <div class="crit-block">
+      <div class="crit-block-title">🎯 유형 분류 규칙</div>
+      <div class="type-rule"><span class="type-rule-badge" style="color:#15803D;background:#ECFDF5">📰 미디어</span><span class="type-rule-desc">미디어/언론·기자 직함</span></div>
+      <div class="type-rule"><span class="type-rule-badge" style="color:#C2410C;background:#FFF7ED">💼 바이어</span><span class="type-rule-desc">유통/무역/구매담당</span></div>
+      <div class="type-rule"><span class="type-rule-badge" style="color:#7E22CE;background:#FDF4FF">⭐ 스폰서</span><span class="type-rule-desc">대기업 or 고점수+α</span></div>
+      <div class="type-rule"><span class="type-rule-badge" style="color:#1D4ED8;background:#EEF6FF">🏪 부스</span><span class="type-rule-desc">제조/브랜드 (기본)</span></div>
+    </div>
+    <div style="margin-top:8px;padding:10px 12px;background:#242424;border-radius:8px;">
+      <div class="crit-block-title" style="margin-bottom:6px;">🏆 등급 기준</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#059669;flex-shrink:0"></div>
+          <span style="font-size:10.5px;color:#D1D5DB;">높은 적합도 <strong style="color:#34D399">70점↑</strong></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>
+          <span style="font-size:10.5px;color:#D1D5DB;">보통 적합도 <strong style="color:#FCD34D">40~69점</strong></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0"></div>
+          <span style="font-size:10.5px;color:#D1D5DB;">낮은 적합도 <strong style="color:#FCA5A5">39점↓</strong></span>
+        </div>
+      </div>
+    </div>`;
+
+  // ── 메인 영역 ──
+  const summaryCards = `
+    <div class="grade-summary">
+      <div class="gs-card" style="background:#ECFDF5;border-color:#6EE7B7" onclick="setRkFilter('high')">
+        <div class="gs-count" style="color:#059669">${high.length}</div>
+        <div class="gs-label" style="color:#059669">✅ 높은 적합도</div>
+        <div class="gs-pts" style="color:#059669">70점 이상 · 즉시 컨택</div>
+      </div>
+      <div class="gs-card" style="background:#FFFBEB;border-color:#FCD34D" onclick="setRkFilter('mid')">
+        <div class="gs-count" style="color:#D97706">${mid.length}</div>
+        <div class="gs-label" style="color:#D97706">⚡ 보통 적합도</div>
+        <div class="gs-pts" style="color:#D97706">40~69점 · 검토 후 컨택</div>
+      </div>
+      <div class="gs-card" style="background:#FEF2F2;border-color:#FCA5A5" onclick="setRkFilter('low')">
+        <div class="gs-count" style="color:#DC2626">${low.length}</div>
+        <div class="gs-label" style="color:#DC2626">❌ 낮은 적합도</div>
+        <div class="gs-pts" style="color:#DC2626">39점 이하 · 우선순위 낮음</div>
+      </div>
+    </div>`;
+
+  const distBar = `
+    <div class="dist-bar-wrap">
+      <div class="dist-bar-label">전체 점수 분포 — 클릭하여 필터</div>
+      <div class="dist-bar-track">
+        <div class="dist-seg" style="width:${highPct}%;background:#059669" onclick="setRkFilter('high')">${highPct}%</div>
+        <div class="dist-seg" style="width:${midPct}%;background:#F59E0B" onclick="setRkFilter('mid')">${midPct}%</div>
+        <div class="dist-seg" style="width:${lowPct}%;background:#EF4444" onclick="setRkFilter('low')">${lowPct}%</div>
+      </div>
+      <div class="dist-legend">
+        <span class="dist-legend-item"><span class="dist-dot" style="background:#059669"></span>높은 적합도 ${high.length}명</span>
+        <span class="dist-legend-item"><span class="dist-dot" style="background:#F59E0B"></span>보통 적합도 ${mid.length}명</span>
+        <span class="dist-legend-item"><span class="dist-dot" style="background:#EF4444"></span>낮은 적합도 ${low.length}명</span>
+        <span class="dist-legend-item" style="margin-left:auto;cursor:pointer;color:#E8470A;font-weight:700" onclick="setRkFilter('all')">전체 보기</span>
+      </div>
+    </div>`;
+
+  document.getElementById('tab-ranking').innerHTML = `
+    <div class="rk-wrap">
+      <div class="rk-sidebar">${sidebar}</div>
+      <div class="rk-main">
+        <div class="rk-top">
+          <div class="rk-title">섭외 우선순위 분석 <span>${total}명</span></div>
+          <div class="rk-desc">카드를 클릭하면 이메일 생성 화면으로 이동합니다</div>
+        </div>
+        ${summaryCards}
+        ${distBar}
+        <div id="rk-cards"></div>
+      </div>
+    </div>`;
+
+  renderRankingCards();
+}
+
+function renderRankingCards() {
+  const scored = window._rkScored || [];
+  const list = rkFilter==='all' ? scored : scored.filter(c=>c._grade===rkFilter);
+
+  function scoreColor(s) { return s>=70?'#059669':s>=40?'#F59E0B':'#EF4444'; }
+
+  if (rkFilter==='all') {
+    const high = scored.filter(c=>c._grade==='high');
+    const mid  = scored.filter(c=>c._grade==='mid');
+    const low  = scored.filter(c=>c._grade==='low');
+    document.getElementById('rk-cards').innerHTML =
+      renderSection('✅ 높은 적합도','#059669',high) +
+      renderSection('⚡ 보통 적합도','#D97706',mid) +
+      renderSection('❌ 낮은 적합도','#DC2626',low);
+  } else {
+    const labels = {high:'✅ 높은 적합도',mid:'⚡ 보통 적합도',low:'❌ 낮은 적합도'};
+    const colors = {high:'#059669',mid:'#D97706',low:'#DC2626'};
+    document.getElementById('rk-cards').innerHTML = renderSection(labels[rkFilter],colors[rkFilter],list);
+  }
+}
+
+function renderSection(label, color, list) {
+  if (!list.length) return '';
+  function scoreColor(s) { return s>=70?'#059669':s>=40?'#F59E0B':'#EF4444'; }
+  const cards = list.map((c,i)=>{
+    const tc = TYPE_COLORS[c._sugType]||TYPE_COLORS['부스'];
+    const rc = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const tags = c._reasons.map(r=>`<span class="rk-tag">${esc(r)}</span>`).join('');
+    const sc = scoreColor(c._score);
+    return `<div class="rk-card" onclick="goToContact(${c.id})">
+      <div class="rk-rank ${rc}">${i+1}</div>
+      <div>
+        <div class="rk-name">${esc(FLAGS[c.country]||'🌏')} ${esc(c.name)}</div>
+        <div class="rk-company">${esc(c.company)}</div>
+      </div>
+      <div class="rk-score-col">
+        <span class="rk-score-num" style="color:${sc}">${c._score}<span style="font-size:10px;font-weight:500;color:#9CA3AF">pt</span></span>
+        <div class="rk-score-bar-bg"><div class="rk-score-bar-fill" style="width:${c._score}%;background:${sc}"></div></div>
+      </div>
+      <div><span class="rk-type-badge" style="background:${tc.bg};color:${tc.text};border-color:${tc.border}">${tc.label}</span></div>
+      <div class="rk-tags">${tags}</div>
+    </div>`;
+  }).join('');
+  return `<div class="rk-section-label" style="color:${color}">${label}<span style="font-size:10px;font-weight:400;color:#9CA3AF;margin-left:6px">${list.length}명</span></div>${cards}`;
+}
+
+function goToContact(id) {
+  switchTab('email');
+  selectContact(id);
+}
+
+
+// ── 행사 선택 ─────────────────────────────────────────────────────
+function selectEvent(id) {
+  if (!SHOWS[id]) return;
+  state.event = id;
+  // 이미 선택된 시즌 유지 (행사 전환 시에만 첫 시즌으로 리셋)
+  const validSeason = SHOWS[id].seasons.find(s => s.key === state.season);
+  if (!validSeason) state.season = SHOWS[id].seasons[0].key;
+  // 칩 active 업데이트
+  Object.keys(SHOWS).forEach(k => {
+    const btn = document.getElementById('chip-' + k);
+    if (btn) btn.className = 'event-chip' + (k === id ? ' active' : '');
+  });
+  renderEventDetailBar();
+  if (state.selected && state.purpose) renderDetail();
+}
+
+// ── 행사 상세바 렌더 (Tier 3) ──────────────────────────────────────
+function renderEventDetailBar() {
+  const bar = document.getElementById('event-detail-bar');
+  if (!bar) return;
+  const ev = SHOWS[state.event] || SHOWS.megazoo;
+  const ST = ev.stats || {};
+
+  const seasonPills = ev.seasons.map(s => {
+    const active = s.key === state.season;
+    return `<button class="ev-season-pill${active?' active':''}" onclick="setSeason('${s.key}')">${s.label}<br><span class="ev-season-date">${s.dates}</span></button>`;
+  }).join('');
+
+  const statItems = [
+    ['총 방문객', (ST.visitors2025||'—')+'명'],
+    ['참가사',   (ST.exhibitors2025||'—')+'개사'],
+    ['해외 참가국',(ST.countries2025||'—')+'개국'],
+    ['비즈매칭', (ST.matchMeetings||'—')+'건'],
+    ['총 상담액', ST.consultationUSD||'—'],
+  ].map(([l,v])=>`<div class="ev-stat-item"><span class="ev-stat-label">${l}</span><span class="ev-stat-value">${v}</span></div>`).join('');
+
+  bar.innerHTML = `
+    ${seasonPills}
+    <div class="ev-divider"></div>
+    <span class="ev-perf-label">2025 실적</span>
+    ${statItems}
+  `;
+}
+
+</script>
+</body>
+</html>
