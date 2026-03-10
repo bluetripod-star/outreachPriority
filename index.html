@@ -49,7 +49,9 @@
   #search-box input:focus { border-color: #E8470A; }
   .filter-row { display: flex; gap: 5px; margin-top: 7px; }
   .filter-row select { flex: 1; padding: 5px 6px; border: 1.5px solid #E5E7EB; border-radius: 6px; font-size: 11.5px; background: #F9FAFB; color: #374151; outline: none; }
-  #sort-row { display: flex; gap: 4px; padding: 6px 13px 8px; border-bottom: 1px solid #F3F4F6; flex-wrap: wrap; }
+  #list-controls { display: flex; align-items: center; gap: 6px; padding: 5px 13px 7px; border-bottom: 1px solid #F3F4F6; flex-wrap: wrap; }
+  #count-label { font-size: 10px; color: #9CA3AF; white-space: nowrap; flex-shrink: 0; font-weight: 600; }
+  #sort-row { display: flex; gap: 4px; flex-wrap: wrap; padding: 0; }
   .sort-btn { font-size: 10.5px; padding: 3px 8px; border-radius: 12px; border: 1px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer; display: flex; align-items: center; gap: 3px; transition: all .12s; white-space: nowrap; }
   .sort-btn:hover { border-color: #E8470A; color: #E8470A; }
   .sort-btn.active { background: #1A1A1A; color: #fff; border-color: #1A1A1A; font-weight: 700; }
@@ -220,11 +222,10 @@
 
 <!-- ── Tier 2: 행사 칩 ── -->
 <div id="event-chip-bar">
+  <button class="event-chip" id="chip-khf"     onclick="selectEvent('khf')">🏥 KHF</button>
   <button class="event-chip active" id="chip-megazoo" onclick="selectEvent('megazoo')">🐾 MEGAZOO</button>
-  <button class="event-chip" id="chip-gocaf"  onclick="selectEvent('gocaf')">🏕️ GOCAF</button>
-  <button class="event-chip" id="chip-khf"    onclick="selectEvent('khf')">🏥 KHF</button>
   <button class="event-chip" id="chip-kfarm"  onclick="selectEvent('kfarm')">🌱 KFARM</button>
-  <button class="event-chip" id="chip-kocdf"  onclick="selectEvent('kocdf')">☕ KOCDF</button>
+  <button class="event-chip" id="chip-gocaf"  onclick="selectEvent('gocaf')">🏕️ GOCAF</button>
 </div>
 
 <!-- ── Tier 3: 행사 상세 (동적) ── -->
@@ -247,8 +248,10 @@
         </select>
         <select id="filter-country" onchange="renderList()"></select>
       </div>
-      <div id="count-label"></div>
-      <div id="sort-row"></div>
+      <div id="list-controls">
+        <span id="count-label"></span>
+        <div id="sort-row"></div>
+      </div>
     </div>
     <div id="grade-filter-bar">
       <div class="gf-header">
@@ -396,8 +399,7 @@ const SHOWS = {
   gocaf: {
     id:'gocaf', name:'GOCAF 2026', emoji:'🏕️', color:'#2D6A4F',
     seasons:[
-      { key:'1', label:'KINTEX', dates:'23–25 May 2026', venue:'KINTEX, Ilsan' },
-      { key:'2', label:'Final', dates:'27–29 Nov 2026', venue:'KINTEX, Ilsan' }
+      { key:'1', label:'KINTEX', dates:'23–25 May 2026', venue:'KINTEX, Ilsan' }
     ],
     stats:{ visitors2025:"184,869", exhibitors2025:"1,052", booths2025:"7,644", matchMeetings:"—",
             matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
@@ -432,20 +434,6 @@ const SHOWS = {
     contact:{ tel:"+82-2-6121-6388", email:"kfarm@esgroup.net", web:"www.kfarm.co.kr" },
     market:{ size2027:"—", importUSD:"—", importCountries:"—" }
   },
-  kocdf: {
-    id:'kocdf', name:'KOCDF 2026', emoji:'☕', color:'#9C4221',
-    seasons:[
-      { key:'1', label:'시즌1', dates:'3–5 Apr 2026', venue:'수원메쎄 (수원역)' },
-      { key:'2', label:'시즌2', dates:'11–13 Dec 2026', venue:'수원메쎄 (수원역)' }
-    ],
-    stats:{ visitors2025:"7,041", exhibitors2025:"135", booths2025:"135", matchMeetings:"—",
-            matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
-            database:"—", growthYoY:"—", overseasGrowth:"—",
-            overseasVisitors2025:"—", countries2025:"—" },
-    booth:{ spaceOnly:"KRW 600,000/3㎡", shellScheme:"KRW 800,000~1,000,000/3㎡" },
-    contact:{ tel:"+82-2-6121-6366", email:"kocdf@esgroup.net", web:"www.kocdf.com" },
-    market:{ size2027:"—", importUSD:"—", importCountries:"—" }
-  }
 };
 
 const TYPE_COLORS = {
@@ -662,7 +650,6 @@ const SHOW_WEIGHTS = {
   gocaf:  { pet:35, trade:20, health:8,  it:12, food:10, beauty:8,  edu:5, mfg:15, media:10, other:4 },
   khf:    { pet:5,  trade:8,  health:45, it:28, food:5,  beauty:5,  edu:18, mfg:5, media:8, other:2 },
   kfarm:  { pet:12, trade:12, health:8,  it:30, food:20, beauty:3,  edu:12, mfg:18, media:5, other:2 },
-  kocdf:  { pet:8,  trade:18, health:5,  it:8,  food:42, beauty:12, edu:5, mfg:8,  media:15, other:2 },
 };
 function classifyContact(f) {
   let score = f.score ?? 0; const reasons = [];
@@ -807,14 +794,22 @@ function renderList() {
     (fc==="전체" || c.country===fc)
   );
 
+  // 등급 필터 적용
+  if (gradeFilter !== 'all') {
+    filtered = filtered.filter(c => {
+      if (c._grade === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; }
+      return c._grade === gradeFilter;
+    });
+  }
+
   // 정렬
   const TYPE_ORDER = {"부스":0,"바이어":1,"스폰서":2,"미디어":3};
   filtered.sort((a, b) => {
     let va, vb;
     if (sortKey === 'priority') {
-      va = a.score ?? classifyContact(a).score;
-      vb = b.score ?? classifyContact(b).score;
-      return (vb - va) * sortDir; // 높은 점수가 위
+      if (a._score === undefined) { const ra = classifyContact(a); a._score = ra.score; a._grade = ra.grade; }
+      if (b._score === undefined) { const rb = classifyContact(b); b._score = rb.score; b._grade = rb.grade; }
+      return (b._score - a._score) * sortDir;
     } else if (sortKey === 'name') {
       va = a.name.replace(/\(.*\)/,'').trim();
       vb = b.name.replace(/\(.*\)/,'').trim();
@@ -830,8 +825,7 @@ function renderList() {
     return 0;
   });
   const shown = filtered.length, total = contacts.length;
-  document.getElementById("count-label").innerHTML =
-    `<span style="font-weight:600;color:#6B7280">${shown}</span>명 표시&ensp;/&ensp;전체 <span style="font-weight:600;color:#6B7280">${total}</span>명`;
+  document.getElementById("count-label").textContent = `${shown}/${total}명`;
   document.getElementById("contact-count") && (document.getElementById("contact-count").textContent = total + "명");
 
   // 별점: score → 1~5성 (70↑=5, 60↑=4, 45↑=3, 30↑=2, else=1)
@@ -869,9 +863,13 @@ function renderContactItem(c) {
 
 function renderGradeFilterChips() {
   const all = contacts;
-  const high = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; c._grade=g; return g==='high';}).length;
-  const mid  = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; return g==='mid';}).length;
-  const low  = all.filter(c=>{ const g=c._grade||classifyContact(c).grade; return g==='low';}).length;
+  // _score, _grade 모두 캐싱 (정렬에도 사용됨)
+  all.forEach(c => {
+    if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; }
+  });
+  const high = all.filter(c => c._grade === 'high').length;
+  const mid  = all.filter(c => c._grade === 'mid').length;
+  const low  = all.filter(c => c._grade === 'low').length;
   const chips = [
     {key:'all',  label:'전체',      cnt:all.length, cls:'active-all'},
     {key:'high', label:'🔥 높은 적합도', cnt:high, cls:'active-high'},
