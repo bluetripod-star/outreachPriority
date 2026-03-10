@@ -184,6 +184,7 @@
   .btn-cancel { padding: 7px 16px; background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 7px; cursor: pointer; font-size: 13px; color: #374151; }
   .btn-add { padding: 7px 18px; background: #E8470A; color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; }
   .btn-add.disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
+  .recommend-note { display: flex; align-items: flex-start; gap: 8px; background: #FFF9F7; border: 1px solid #FED7AA; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px; font-size: 11.5px; color: #374151; line-height: 1.5; }
   .recommend-note .rn-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
 
   /* ── 등급 필터 바 ── */
@@ -192,7 +193,9 @@
   .gf-label { font-size: 9.5px; font-weight: 800; color: #6B7280; text-transform: uppercase; letter-spacing: .08em; }
   .scoring-btn { font-size: 9.5px; color: #9CA3AF; background: none; border: 1px solid #E5E7EB; border-radius: 4px; padding: 2px 7px; cursor: pointer; transition: all .1s; }
   .scoring-btn:hover { color: #E8470A; border-color: #E8470A; }
-  .gf-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .gf-chips { display: flex; flex-direction: column; gap: 5px; }
+  .gf-chips-row { display: flex; gap: 5px; }
+  .gf-chip-all { width: 100%; justify-content: center; }
   .gf-chip { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer; font-weight: 600; transition: all .12s; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
   .gf-chip:hover { border-color: #9CA3AF; }
   .gf-chip .gf-cnt { font-size: 9.5px; opacity: .75; font-weight: 700; }
@@ -284,10 +287,7 @@
     <div id="grade-filter-bar">
       <div class="gf-header">
         <span class="gf-label" id="gf-show-label">📊 전시 적합도 필터</span>
-        <div style="display:flex;gap:5px">
-          <button class="scoring-btn" onclick="openScoringModal()">기준 보기 ›</button>
-          <button class="scoring-btn" onclick="openWeightEditor()" style="color:#E8470A;border-color:#E8470A55">⚙️ 가중치 편집</button>
-        </div>
+        <button class="scoring-btn" onclick="openWeightEditor()" style="color:#E8470A;border-color:#E8470A55">⚙️ 가중치 편집</button>
       </div>
       <div class="gf-chips" id="grade-filter-chips"></div>
     </div>
@@ -692,38 +692,48 @@ const SHOW_WEIGHTS = {
 };
 // 기본값 백업 (가중치 편집기 초기화에 사용)
 const DEFAULT_WEIGHTS = JSON.parse(JSON.stringify(SHOW_WEIGHTS));
+// 직함 가중치 (전시 공통)
+let TITLE_WEIGHTS = { ceo:30, director:20, specialist:12, other:8 };
+const DEFAULT_TITLE_WEIGHTS = { ...TITLE_WEIGHTS };
+// 연락처 가중치 (전시 공통)
+let CONTACT_WEIGHTS = { both:25, emailOnly:15, phoneOnly:15 };
+const DEFAULT_CONTACT_WEIGHTS = { ...CONTACT_WEIGHTS };
+
 function classifyContact(f) {
-  let score = f.score ?? 0; const reasons = [];
+  let score = 0; const reasons = [];
   const t = ((f.title||"")+" "+(f.title_en||"")).toLowerCase();
   const ind = (f.industry||"").toLowerCase();
   const co = ((f.company||"")+" "+(f.company_en||"")).toLowerCase();
-  if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { score+=30; reasons.push("의사결정권자"); }
-  else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t)) { score+=20; reasons.push("중간관리자"); }
-  else if (/담당|coordinator|executive|specialist|lecturer|professor/.test(t)) { score+=12; reasons.push("실무 담당자"); }
-  else { score+=8; }
+  // 직함
+  if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { score+=TITLE_WEIGHTS.ceo;        reasons.push("의사결정권자"); }
+  else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t))   { score+=TITLE_WEIGHTS.director;   reasons.push("중간관리자"); }
+  else if (/담당|coordinator|executive|specialist|lecturer|professor/.test(t)){ score+=TITLE_WEIGHTS.specialist; reasons.push("실무 담당자"); }
+  else { score+=TITLE_WEIGHTS.other; }
+  // 업종
   const w = SHOW_WEIGHTS[state.event] || SHOW_WEIGHTS.megazoo;
-  if (/반려동물|펫|pet/.test(ind))                                  { score+=w.pet;    reasons.push("핵심 타겟 업종"); }
-  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=w.trade; reasons.push("유통/무역 업종"); }
-  else if (/의료|헬스|health|pharma|수의|bio|바이오/.test(ind))       { score+=w.health; reasons.push("헬스케어 관련"); }
-  else if (/화장품|코스메틱|cosmet|beauty|미용|패션/.test(ind))        { score+=w.beauty; reasons.push("뷰티/코스메틱"); }
-  else if (/it|기술|tech|통신|robot|로봇|ai|digital/.test(ind))       { score+=w.it;     reasons.push("IT/기술 업종"); }
-  else if (/미디어|언론|media|광고|방송/.test(ind))                    { score+=w.media;  reasons.push("미디어 업종"); }
-  else if (/식품|food|건강|영양|농업|축산|farm/.test(ind))              { score+=w.food;   reasons.push("식품/농업 관련"); }
-  else if (/교육|연구|research|university/.test(ind))                 { score+=w.edu;    reasons.push("교육/연구"); }
-  else if (/제조|manufact|건설|construction/.test(ind))               { score+=w.mfg;        reasons.push("제조/건설업"); }
+  if (/반려동물|펫|pet/.test(ind))                                  { score+=w.pet;         reasons.push("핵심 타겟 업종"); }
+  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=w.trade;  reasons.push("유통/무역 업종"); }
+  else if (/의료|헬스|health|pharma|수의|bio|바이오/.test(ind))       { score+=w.health;      reasons.push("헬스케어 관련"); }
+  else if (/화장품|코스메틱|cosmet|beauty|미용|패션/.test(ind))        { score+=w.beauty;      reasons.push("뷰티/코스메틱"); }
+  else if (/it|기술|tech|통신|robot|로봇|ai|digital/.test(ind))       { score+=w.it;          reasons.push("IT/기술 업종"); }
+  else if (/미디어|언론|media|광고|방송/.test(ind))                    { score+=w.media;       reasons.push("미디어 업종"); }
+  else if (/식품|food|건강|영양|농업|축산|farm/.test(ind))              { score+=w.food;        reasons.push("식품/농업 관련"); }
+  else if (/교육|연구|research|university/.test(ind))                 { score+=w.edu;         reasons.push("교육/연구"); }
+  else if (/제조|manufact|건설|construction/.test(ind))               { score+=w.mfg;         reasons.push("제조/건설업"); }
   else if (/캠핑|아웃도어|camping|outdoor|등산|트레킹|hiking/.test(ind)||/캠핑|아웃도어|camping|outdoor/.test(co)) { score+=(w.camping||0); reasons.push("캠핑/아웃도어"); }
-  else if (/전시|이벤트|expo|fair/.test(ind))                          { score+=12;           reasons.push("전시/이벤트"); }
+  else if (/전시|이벤트|expo|fair/.test(ind))                          { score+=12;            reasons.push("전시/이벤트"); }
   else { score+=w.other; reasons.push("관련도 낮은 업종"); }
-  // 연락처: 둘 다 있으면 25pt, 하나만 있으면 각 15pt
-  if (f.email && f.phone) { score+=25; reasons.push("이메일+전화 보유"); }
-  else if (f.email)        { score+=15; reasons.push("이메일 보유"); }
-  else if (f.phone)        { score+=15; reasons.push("전화번호 보유"); }
+  // 연락처
+  if (f.email && f.phone) { score+=CONTACT_WEIGHTS.both;      reasons.push("이메일+전화 보유"); }
+  else if (f.email)        { score+=CONTACT_WEIGHTS.emailOnly; reasons.push("이메일 보유"); }
+  else if (f.phone)        { score+=CONTACT_WEIGHTS.phoneOnly; reasons.push("전화번호 보유"); }
   const grade = score>=70?"high":score>=40?"mid":"low";
   let suggestedType="부스", typeReason="제조/브랜드 업체로 부스 참가 적합";
   const isBigCo = /lg|삼성|현대|롯데|sk|cj|카카오|네이버|쿠팡|아모레|애경|lotte|hyundai|samsung|purina|mars|royal canin/.test(co);
-  if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자로 파트너십 적합"; }
-  else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통/구매 담당으로 바이어 초청 적합"; }
-  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품|health/.test(ind))) { suggestedType="스폰서"; typeReason="대기업 또는 높은 브랜드 파워로 스폰서 적합"; }
+  if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자 → 공식 미디어 파트너 협력 적합"; }
+  else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통·구매 담당 → 1:1 바이어 매칭으로 직접 거래 기회 창출"; }
+  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품|health/.test(ind))) { suggestedType="스폰서"; typeReason="높은 브랜드 인지도 → 스폰서십으로 전시장 주요 노출 적합"; }
+  else { typeReason="제품/서비스 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업"; }
   return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
 }
 
@@ -916,15 +926,17 @@ function renderGradeFilterChips() {
   const high = all.filter(c => c._grade === 'high').length;
   const mid  = all.filter(c => c._grade === 'mid').length;
   const low  = all.filter(c => c._grade === 'low').length;
-  const chips = [
-    {key:'all',  label:'전체',      cnt:all.length, cls:'active-all'},
-    {key:'high', label:'🔥 높은 적합도', cnt:high, cls:'active-high'},
-    {key:'mid',  label:'⚡ 보통',    cnt:mid,  cls:'active-mid'},
-    {key:'low',  label:'❌ 낮음',    cnt:low,  cls:'active-low'},
-  ];
   const el = document.getElementById('grade-filter-chips');
   if (!el) return;
-  el.innerHTML = chips.map(ch=>`<button class="gf-chip${gradeFilter===ch.key?' '+ch.cls:''}" onclick="setGradeFilter('${ch.key}')">${ch.label} <span class="gf-cnt">${ch.cnt}</span></button>`).join('');
+  const makeChip = (key, label, cnt, cls, extraClass='') =>
+    `<button class="gf-chip${gradeFilter===key?' '+cls:''}${extraClass?' '+extraClass:''}" onclick="setGradeFilter('${key}')">${label} <span class="gf-cnt">${cnt}</span></button>`;
+  el.innerHTML = `
+    <div class="gf-chips-row">${makeChip('all','전체',all.length,'active-all','gf-chip-all')}</div>
+    <div class="gf-chips-row">
+      ${makeChip('high','🔥 높은 적합도',high,'active-high')}
+      ${makeChip('mid','⚡ 보통',mid,'active-mid')}
+      ${makeChip('low','❌ 낮음',low,'active-low')}
+    </div>`;
 }
 
 function selectContact(id) {
@@ -1130,6 +1142,7 @@ function renderDetail() {
       <div class="purpose-btns">
         <div class="section-label">발송 목적</div>
         <div class="btn-group">${purposeBtns}</div>
+        ${(()=>{ const r=classifyContact(c); const tc2=TYPE_COLORS[r.suggestedType]||TYPE_COLORS["부스"]; return `<div style="margin-top:6px;font-size:11px;color:#6B7280;display:flex;align-items:center;gap:5px"><span style="background:${tc2.bg};color:${tc2.text};border:1px solid ${tc2.border};border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:700">${tc2.label} 추천</span><span>${r.typeReason}</span></div>`; })()}
       </div>
       <div class="season-picker">
         <div class="section-label">시즌</div>
@@ -1324,18 +1337,40 @@ const WE_INDUSTRIES = [
 function openWeightEditor() {
   const ev = SHOWS[state.event] || SHOWS.megazoo;
   const w  = SHOW_WEIGHTS[state.event] || SHOW_WEIGHTS.megazoo;
-  document.getElementById('we-title').textContent = `${ev.emoji} ${ev.name} — 업종 가중치 편집`;
-  document.getElementById('we-fields').innerHTML = WE_INDUSTRIES.map(({key, label}) => {
-    const val = w[key] ?? 0;
-    return `<div class="we-field">
+  document.getElementById('we-title').textContent = `${ev.emoji} ${ev.name} — 가중치 편집`;
+
+  const makeRow = (label, key, val, type, max) =>
+    `<div class="we-field">
       <span class="we-label">${label}</span>
       <div class="we-input-wrap">
-        <input type="range" min="0" max="50" value="${val}" class="we-range"
-          oninput="this.nextElementSibling.textContent=this.value" data-key="${key}">
+        <input type="range" min="0" max="${max}" value="${val}" class="we-range"
+          oninput="this.nextElementSibling.textContent=this.value"
+          data-key="${key}" data-type="${type}">
         <span class="we-val">${val}</span>
       </div>
     </div>`;
-  }).join('');
+
+  const industryRows = WE_INDUSTRIES.map(({key, label}) =>
+    makeRow(label, key, w[key]??0, 'industry', 50)).join('');
+
+  const titleRows = [
+    { key:'ceo',        label:'대표 / CEO / Founder' },
+    { key:'director',   label:'이사 / Manager / 팀장' },
+    { key:'specialist', label:'담당 / Specialist' },
+    { key:'other',      label:'기타' },
+  ].map(({key, label}) => makeRow(label, key, TITLE_WEIGHTS[key]??0, 'title', 50)).join('');
+
+  const contactRows = [
+    { key:'both',      label:'이메일 + 전화 모두' },
+    { key:'emailOnly', label:'이메일만 보유' },
+    { key:'phoneOnly', label:'전화번호만 보유' },
+  ].map(({key, label}) => makeRow(label, key, CONTACT_WEIGHTS[key]??0, 'contact', 30)).join('');
+
+  document.getElementById('we-fields').innerHTML =
+    `<div class="we-section-label">🏢 업종 가중치 (${ev.name} 전용)</div>${industryRows}
+     <div class="we-section-label" style="margin-top:10px">👤 직함 가중치 (전시 공통)</div>${titleRows}
+     <div class="we-section-label" style="margin-top:10px">📬 연락처 가중치 (전시 공통)</div>${contactRows}`;
+
   document.getElementById('weight-editor-modal').style.display = 'flex';
 }
 
@@ -1346,7 +1381,13 @@ function closeWeightEditor() {
 function saveWeights() {
   const inputs = document.querySelectorAll('#we-fields .we-range');
   const w = SHOW_WEIGHTS[state.event] || SHOW_WEIGHTS.megazoo;
-  inputs.forEach(inp => { w[inp.dataset.key] = parseInt(inp.value); });
+  inputs.forEach(inp => {
+    const val = parseInt(inp.value);
+    const type = inp.dataset.type;
+    if (type === 'industry') w[inp.dataset.key] = val;
+    else if (type === 'title') TITLE_WEIGHTS[inp.dataset.key] = val;
+    else if (type === 'contact') CONTACT_WEIGHTS[inp.dataset.key] = val;
+  });
   // 점수 캐시 초기화 후 전체 재산정
   contacts.forEach(c => { c._score = undefined; c._grade = undefined; });
   closeWeightEditor();
@@ -1359,10 +1400,16 @@ function resetWeights() {
   const def = DEFAULT_WEIGHTS[state.event];
   if (!def) return;
   Object.assign(SHOW_WEIGHTS[state.event], def);
+  Object.assign(TITLE_WEIGHTS, DEFAULT_TITLE_WEIGHTS);
+  Object.assign(CONTACT_WEIGHTS, DEFAULT_CONTACT_WEIGHTS);
   // 슬라이더 값 초기화
   const inputs = document.querySelectorAll('#we-fields .we-range');
   inputs.forEach(inp => {
-    const val = def[inp.dataset.key] ?? 0;
+    const type = inp.dataset.type;
+    let val = 0;
+    if (type === 'industry') val = def[inp.dataset.key] ?? 0;
+    else if (type === 'title') val = DEFAULT_TITLE_WEIGHTS[inp.dataset.key] ?? 0;
+    else if (type === 'contact') val = DEFAULT_CONTACT_WEIGHTS[inp.dataset.key] ?? 0;
     inp.value = val;
     inp.nextElementSibling.textContent = val;
   });
