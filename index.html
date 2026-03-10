@@ -212,17 +212,19 @@
 
 <!-- ── Tier 1: 제목부 ── -->
 <div id="app-title-bar">
-  <span class="app-title">영업 대상 관리</span>
+  <span class="app-title">섭외 DB 관리</span>
   <span class="app-title-sep">|</span>
-  <span class="app-subtitle">명함 DB 기반 행사별 섭외 분석 · 이메일 생성</span>
-  <span class="db-badge" id="db-count-badge">86명 DB</span>
+  <span class="app-subtitle">전시별 섭외 적합도 분석 · 이메일 생성</span>
+  <span class="db-badge" id="db-count-badge">158명 DB</span>
 </div>
 
 <!-- ── Tier 2: 행사 칩 ── -->
 <div id="event-chip-bar">
-  <button class="event-chip active" id="chip-megazoo" onclick="selectEvent('megazoo')">🐾 MEGAZOO 2026</button>
-  <span class="chip-placeholder">＋ GOCAF 2026 <span style="opacity:.5;font-size:10px">준비중</span></span>
-  <span class="chip-placeholder">＋ KFARM 2026 <span style="opacity:.5;font-size:10px">준비중</span></span>
+  <button class="event-chip active" id="chip-megazoo" onclick="selectEvent('megazoo')">🐾 MEGAZOO</button>
+  <button class="event-chip" id="chip-gocaf"  onclick="selectEvent('gocaf')">🏕️ GOCAF</button>
+  <button class="event-chip" id="chip-khf"    onclick="selectEvent('khf')">🏥 KHF</button>
+  <button class="event-chip" id="chip-kfarm"  onclick="selectEvent('kfarm')">🌱 KFARM</button>
+  <button class="event-chip" id="chip-kocdf"  onclick="selectEvent('kocdf')">☕ KOCDF</button>
 </div>
 
 <!-- ── Tier 3: 행사 상세 (동적) ── -->
@@ -250,7 +252,7 @@
     </div>
     <div id="grade-filter-bar">
       <div class="gf-header">
-        <span class="gf-label">📊 섭외 우선순위 필터</span>
+        <span class="gf-label" id="gf-show-label">📊 전시 적합도 필터</span>
         <button class="scoring-btn" onclick="openScoringModal()">채점 기준 보기 ›</button>
       </div>
       <div class="gf-chips" id="grade-filter-chips"></div>
@@ -263,7 +265,7 @@
     <div class="empty-state" id="empty-state">
       <div class="icon">✉️</div>
       <h3>좌측에서 연락처를 선택하세요</h3>
-      <p>MEGAZOO 실제 데이터 기반 맞춤 이메일이 자동 생성됩니다</p>
+      <p>전시를 선택하면 적합도 순으로 연락처가 정렬됩니다</p>
       <div class="lang-pills">
         <span class="lang-pill">🇰🇷 한국어</span>
         <span class="lang-pill">🇺🇸 English</span>
@@ -280,7 +282,7 @@
 <div class="modal-overlay" id="scoring-modal" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
-      <div><h2>📊 섭외 우선순위 채점 기준표</h2><p>명함 86장을 4가지 항목으로 자동 채점 → 우선순위 산정</p></div>
+      <div><h2>📊 섭외 우선순위 채점 기준표</h2><p>선택 전시의 업종 가중치 기반 자동 채점 → 섭외 우선순위 산정</p></div>
       <button class="modal-close" onclick="closeScoringModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -390,15 +392,60 @@ const SHOWS = {
     booth:{ spaceOnly:"USD 3,000", shellScheme:"USD 3,600" },
     contact:{ tel:"+82-2-6121-6462", email:"megazoo.es@esgroup.net", web:"www.megazoo.co.kr/eng" },
     market:{ size2027:"KRW 6.0 trillion", importUSD:"USD 337 million", importCountries:"45" }
+  },
+  gocaf: {
+    id:'gocaf', name:'GOCAF 2026', emoji:'🏕️', color:'#2D6A4F',
+    seasons:[
+      { key:'1', label:'KINTEX', dates:'23–25 May 2026', venue:'KINTEX, Ilsan' },
+      { key:'2', label:'Final', dates:'27–29 Nov 2026', venue:'KINTEX, Ilsan' }
+    ],
+    stats:{ visitors2025:"184,869", exhibitors2025:"1,052", booths2025:"7,644", matchMeetings:"—",
+            matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
+            database:"—", growthYoY:"+1.5%", overseasGrowth:"—",
+            overseasVisitors2025:"—", countries2025:"—" },
+    booth:{ spaceOnly:"KRW 800,000/3㎡", shellScheme:"KRW 1,000,000/3㎡" },
+    contact:{ tel:"+82-2-6121-6388", email:"caf@esgroup.net", web:"www.gocaf.kr/eng" },
+    market:{ size2027:"KRW 4.69B", importUSD:"—", importCountries:"—" }
+  },
+  khf: {
+    id:'khf', name:'KHF 2026', emoji:'🏥', color:'#E8003D',
+    seasons:[ { key:'1', label:'KHF 2026', dates:'19–21 Aug 2026', venue:'COEX Hall C,D, Seoul' } ],
+    stats:{ visitors2025:"21,855", exhibitors2025:"300", booths2025:"470", matchMeetings:"103",
+            matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
+            database:"—", growthYoY:"—", overseasGrowth:"—",
+            overseasVisitors2025:"—", countries2025:"33" },
+    booth:{ spaceOnly:"KRW 2,000,000/startup", shellScheme:"문의" },
+    contact:{ tel:"+82-2-6121-6462", email:"khf@esgroup.net", web:"www.k-hospital.org" },
+    market:{ size2027:"—", importUSD:"—", importCountries:"—" }
+  },
+  kfarm: {
+    id:'kfarm', name:'KFARM 2026', emoji:'🌱', color:'#2E7D32',
+    seasons:[
+      { key:'1', label:'충청', dates:'18–20 Jun 2026', venue:'OSCO, Cheongju' },
+      { key:'2', label:'수원', dates:'29–31 Oct 2026', venue:'Suwon Messe, Suwon' }
+    ],
+    stats:{ visitors2025:"—", exhibitors2025:"—", booths2025:"—", matchMeetings:"—",
+            matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
+            database:"—", growthYoY:"—", overseasGrowth:"—",
+            overseasVisitors2025:"—", countries2025:"—" },
+    booth:{ spaceOnly:"문의", shellScheme:"문의" },
+    contact:{ tel:"+82-2-6121-6388", email:"kfarm@esgroup.net", web:"www.kfarm.co.kr" },
+    market:{ size2027:"—", importUSD:"—", importCountries:"—" }
+  },
+  kocdf: {
+    id:'kocdf', name:'KOCDF 2026', emoji:'☕', color:'#9C4221',
+    seasons:[
+      { key:'1', label:'시즌1', dates:'3–5 Apr 2026', venue:'수원메쎄 (수원역)' },
+      { key:'2', label:'시즌2', dates:'11–13 Dec 2026', venue:'수원메쎄 (수원역)' }
+    ],
+    stats:{ visitors2025:"7,041", exhibitors2025:"135", booths2025:"135", matchMeetings:"—",
+            matchCompanies:"—", buyerCompanies:"—", consultationUSD:"—",
+            database:"—", growthYoY:"—", overseasGrowth:"—",
+            overseasVisitors2025:"—", countries2025:"—" },
+    booth:{ spaceOnly:"KRW 600,000/3㎡", shellScheme:"KRW 800,000~1,000,000/3㎡" },
+    contact:{ tel:"+82-2-6121-6366", email:"kocdf@esgroup.net", web:"www.kocdf.com" },
+    market:{ size2027:"—", importUSD:"—", importCountries:"—" }
   }
-  /* 행사 추가 시 아래 블록을 복사해서 채우세요:
-  ,gocaf: { id:'gocaf', name:'GOCAF 2026', emoji:'⛺', color:'#2D6A4F',
-    seasons:[ { key:'1', label:'S1', dates:'TBD', venue:'TBD' } ],
-    stats:{}, booth:{}, contact:{}, market:{} }
-  ,kfarm: { id:'kfarm', name:'KFARM 2026', emoji:'🌾', color:'#7B6B3D',
-    seasons:[ { key:'1', label:'S1', dates:'TBD', venue:'TBD' } ],
-    stats:{}, booth:{}, contact:{}, market:{} }
-  */
 };
 
 const TYPE_COLORS = {
@@ -410,92 +457,164 @@ const TYPE_COLORS = {
 const FLAGS = {"한국":"🇰🇷","중국":"🇨🇳","일본":"🇯🇵","대만":"🇹🇼","태국":"🇹🇭","베트남":"🇻🇳","인도네시아":"🇮🇩","필리핀":"🇵🇭","싱가포르":"🇸🇬","홍콩":"🇭🇰"};
 
 let contacts = [
-  {id:1,name:"박진섭 (Justin Park)",company:"dfang",title:"Head Of Department",email:"ddco@ddco.co.kr",phone:"82-10-2749-2145",lang:"영어/한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:""},
-  {id:2,name:"Kate Park",company:"Fair Ground Incorporated",title:"President",email:"katepark0419@gmail.com",phone:"+63 917 628 3263",lang:"영어",country:"필리핀",industry:"유통/무역",type:"바이어",score:85,note:""},
-  {id:3,name:"강리아",company:"Cotton Dog Cork",title:"대표",email:"petgora@movercom.com",phone:"+82 10 4926 9996",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"이미지 각도 기울어짐, 일부 정보 불명확"},
-  {id:4,name:"전수민",company:"Born Baenaet",title:"대표 / 패션디자인학 박사",email:"born-0301@naver.com",phone:"010-8748-6476",lang:"한국어",country:"한국",industry:"미용/패션",type:"부스",score:58,note:"인스타그램: @bornbb_official"},
-  {id:5,name:"나진희 (JinHui Na)",company:"The Weekend Resort",title:"Sales & Marketing Manager",email:"jinhui.na@theweekandresort.com",phone:"+82 10 2216 5261",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:48,note:"인스타그램: theweekand_resort"},
-  {id:6,name:"권민서 (Kwon Min Seo)",company:"주식회사 오앤권",title:"대표이사 / CEO",email:"ritogato@naver.com",phone:"010-8750-3643",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
-  {id:7,name:"이재준",company:"KUDOS (큐더스 이노베이션)",title:"부사장",email:"jj@kudosinnovation.com",phone:"010-3118-4543",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:73,note:""},
-  {id:8,name:"윤지현",company:"페티그램",title:"대표이사",email:"9wol1@naver.com",phone:"010-5044-2201",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
-  {id:9,name:"손지현 (Ally Son)",company:"와이즈벨컴퍼니",title:"이사",email:"info@wisebell.co.kr",phone:"82 10 9983 8306",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:63,note:""},
-  {id:10,name:"신창환 (Shin Chang Hwan)",company:"대주산업주식회사",title:"펫영업본부장 / 부장",email:"happychang@daejuoinc.com",phone:"010-6533-3830",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:""},
-  {id:11,name:"이상휘 (WILLY)",company:"WLSV",title:"CEO",email:"willy@wlsv.kr",phone:"010-7456-4530",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:""},
-  {id:12,name:"Denny Ku",company:"Sistar Indonesia",title:"Director",email:"denny@sistarcompany.com",phone:"+62 813 944 11002",lang:"영어",country:"인도네시아",industry:"유통/무역",type:"바이어",score:75,note:""},
-  {id:13,name:"김영선 (James Kim)",company:"S Global Inc.",title:"대표이사 / CEO",email:"sglobal@sglobalcorp.com",phone:"010-3318-3701",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:80,note:""},
-  {id:14,name:"홍성균",company:"Super Paw",title:"CEO",email:"skhong@superpaw.co.kr",phone:"010-5436-5403",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"인스타그램: @superpaw_kr"},
-  {id:15,name:"윤영린 (Casey Yooun)",company:"BITE ME",title:"Global Business Development",email:"younglin@biteme.co.kr",phone:"010-2674-5104",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:73,note:""},
-  {id:16,name:"허준",company:"멍멍이대학",title:"",email:"doggyuniv@gmail.com",phone:"010-3833-4607",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:73,note:"정보 제한적"},
-  {id:17,name:"김성열 (Scott Kim)",company:"STEMPOINT",title:"경영지원관리부 / 부장",email:"scott@stempoint.co.kr",phone:"010-5219-1965",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:63,note:""},
-  {id:18,name:"Zhenzhu Cao",company:"DogspaX Pet Washing & Grooming Products Ltd",title:"G.M",email:"DogspaX@gmail.com",phone:"139 0385 7509",lang:"영어/중국어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
-  {id:19,name:"박정환",company:"베트남-코리아 비즈니스센터",title:"회장",email:"parhjh@naver.com",phone:"(84) 334-624-154 (VN) / (82) 10-5235-0142 (KR)",lang:"한국어/베트남어",country:"베트남(거주)",industry:"유통/무역",type:"바이어",score:85,note:"한국-베트남 교류"},
-  {id:20,name:"김호첨",company:"MIKKO",title:"대표이사",email:"mikko3@naver.com",phone:"010-3041-5754",lang:"한국어/일본어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"일본 판매처 있음"},
-  {id:21,name:"이예범",company:"NYX ENTERTAINMENT",title:"반려견 사업 팀장",email:"",phone:"010-8451-9084",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:48,note:"인스타그램: @photographer_mike98"},
-  {id:22,name:"Chaki H.K. Li",company:"Bejeweled Accessories / B.A. Creations Limited",title:"Project Officer",email:"chaki.hk@babejeweled.com",phone:"",lang:"영어",country:"홍콩",industry:"미용/패션",type:"바이어",score:38,note:"미국 LA 쇼룸도 있음"},
-  {id:23,name:"Adrian Lim",company:"LUNOJI",title:"Founder",email:"Adrian@lunoji.com",phone:"+65 8870 5979",lang:"영어/한국어",country:"싱가포르",industry:"반려동물/펫케어",type:"바이어",score:95,note:"메모: 싱가폴 바이어/셀러"},
-  {id:24,name:"Yu Naibo",company:"HAKA",title:"Product Manager",email:"edisonyuineast@outlook.com",phone:"+86 139 1182 2949",lang:"영어/중국어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:"WeChat 동일 번호"},
-  {id:25,name:"Urakami",company:"gift tank",title:"Executive Adviser",email:"info@gift-tank.com",phone:"080-3129-4168",lang:"한국어/일본어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:77,note:"이름 불명, 이미지 기울어짐"},
-  {id:26,name:"Chayaluck (Orn) Tummasiri",company:"Ketawa",title:"Managing Director",email:"ketawapet@gmail.com",phone:"+66-65-156-9554",lang:"영어/태국어",country:"태국",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
-  {id:27,name:"곽문지 (moonji)",company:"B stage (B6868)",title:"Dog Stage Scenarist / 펫영양관리사",email:"info@b-inc.jp",phone:"",lang:"일본어/한국어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:63,note:""},
-  {id:28,name:"Charinrat Wongsalangkul",company:"Peterrest Project",title:"Founder",email:"peterest.project@gmail.com",phone:"+669-5592-4691",lang:"영어/태국어",country:"태국",industry:"반려동물/펫케어",type:"바이어",score:95,note:"Pet Friendly Cafe/Hotel, 카카오톡: peterrest.project"},
-  {id:29,name:"(중국어)",company:"中山市家源水族用品厂 (Zhongshan Jiayuan Aquarium Products Factory)",title:"",email:"annie_9080@163.com / zhangyong_mjy@163.com",phone:"13590963551 / 18948868080",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:73,note:"QQ: 904393504 / 핸드라이팅: A010 아쿠아(재료) / 이름 불명 / 'Aoi Orfiji' 오인식→수정"},
-  {id:30,name:"(중국어)",company:"石家庄贝农矿产品有限公司",title:"",email:"",phone:"15633119855",lang:"중국어",country:"중국",industry:"제조업",type:"바이어",score:21,note:""},
-  {id:31,name:"Chen Jacky",company:"Jiaxing Leyou Pet Products Co., Ltd.",title:"International Department Manager",email:"jacky@leyoupet.com",phone:"86-13736872826",lang:"영어/중국어",country:"중국",industry:"유통/무역",type:"바이어",score:75,note:"메모: 파란 볼펜 손글씨 메모 (내용 일부 판독 어려움)"},
-  {id:32,name:"Hui Zhirong",company:"江西海鼎智能科技有限公司 (HAIDING)",title:"销售经理 (Sales Manager)",email:"546443599@qq.com",phone:"151-8055-6699",lang:"중국어(간체)",country:"중국",industry:"IT/기술",type:"바이어",score:63,note:"중국 명함. 사무실전화 판독불가 | 메모: Do98 어떻해 (중국)"},
-  {id:33,name:"Gene Cheung (張振興)",company:"悅之竟貿易有限公司",title:"執行董事 (Executive Director)",email:"info@hopetcare.com",phone:"0976-152-176",lang:"중국어(번체)",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:85,note:"홍콩 연락처 손글씨 추가: +852-6110-5525 | 메모: p1132 HK, +852-6110-5525"},
-  {id:34,name:"Tzu Cheng Wang",company:"Pixel Lab",title:"業務總監 (영업총감)",email:"pixellabtaiwan@gmail.com",phone:"0930-829-028",lang:"중국어(번체)/영어",country:"대만",industry:"반려동물/펫케어",type:"미디어",score:73,note:""},
-  {id:35,name:"채유진",company:"우송대학교 (Woosong University)",title:"동물의료보건복지학부 교수",email:"amoteszruna@naver.com",phone:"010-3740-2942",lang:"한국어",country:"한국",industry:"교육/연구",type:"부스",score:45,note:"팩스: 042-630-9828"},
-  {id:36,name:"천정민 (Jeongmin Cheon)",company:"녹십자수의약품",title:"Sales Manager",email:"jeongmin.cheon@gcvp.co.kr",phone:"+82 10-5340-4872",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:70,note:""},
-  {id:37,name:"김가영",company:"(주)코스트코코리아",title:"매입/관리",email:"kykim@costcokr.com",phone:"010-2786-0639",lang:"한국어",country:"한국",industry:"유통/무역",type:"스폰서",score:63,note:"팩스: 02-2630-2640"},
-  {id:38,name:"김소연 (Soyeon Kim)",company:"LG유플러스",title:"Consumer부문 펫플랫폼트라이브 펫스페이스스쿼드 PO",email:"sonia@lguplus.co.kr",phone:"010 9901 3014",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"스폰서",score:55,note:"펫 플랫폼 부문 담당 / 오분류(페이지이엔지)→수정"},
-  {id:39,name:"송평화",company:"(주)평화글로벌로직스",title:"이사",email:"pgl526@naver.com",phone:"010-2313-0303",lang:"한국어",country:"한국",industry:"물류/로직스",type:"바이어",score:75,note:"팩스: 032-672-8383"},
-  {id:40,name:"박진용 (Park, Jin-Yong)",company:"(주)진용엔지니어링 (Jinyong Engineering co., Ltd.)",title:"대표이사 (C.E.O.)",email:"jyengcoo@naver.com",phone:"010-5422-2019",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:58,note:"팩스: 031-664-9252"},
-  {id:41,name:"박하현",company:"KAIST (한국과학기술원)",title:"문술미래전략대학원 (직책 불명확)",email:"phh1121@kaist.ac.kr",phone:"010-3737-2029",lang:"한국어",country:"한국",industry:"교육/연구",type:"부스",score:45,note:"기존 데이터(박준영/진영엔지니어링)는 완전 오류. 실제 KAIST 명함. 이름·직책 재확인 필요"},
-  {id:42,name:"박현호 (Park, Hyun Ho)",company:"(주)진용엔지니어링",title:"업무이사",email:"phn@jyeng.co",phone:"010-3737-2029",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:48,note:"팩스: 031-664-9252. 기존 \"원고우\"는 완전 오류"},
-  {id:43,name:"장수영 (Soo Yeong Jang)",company:"NEWS1 KOREA Co., Ltd.",title:"Reporter",email:"presy@news1.kr",phone:"+82-10-2598-1809",lang:"한국어/영어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:"동일 인물 앞뒤면"},
-  {id:44,name:"Li Fengyi",company:"Beijing Four Principles International Trade Co., Ltd",title:"General Manager",email:"lifengyi2014@126.com",phone:"+86-15311713051",lang:"영어/중국어",country:"중국",industry:"유통/무역",type:"바이어",score:75,note:""},
-  {id:45,name:"Todd Wan Lee",company:"ROSETTE EXPO INC.",title:"전시사업팀 부장",email:"todd.lee@rstexpo.co.kr",phone:"010-4174-2124",lang:"한국어/영어",country:"한국",industry:"전시/이벤트",type:"부스",score:60,note:""},
-  {id:46,name:"정지영 (Jung Ji Young)",company:"JungJiYoung Coffee Roasters",title:"",email:"jungjiyoungcoffee@gmail.com",phone:"+82 10 9150 4919",lang:"한국어/영어",country:"한국",industry:"식품/F&B",type:"부스",score:51,note:""},
-  {id:47,name:"구민지",company:"Korea Terrarium Association",title:"협회장",email:"koreaterrarium2021@naver.com",phone:"010-5403-5675",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"테라리움(파충류 등)"},
-  {id:48,name:"최서윤",company:"NEWS1",title:"해피펫팀 팀장 / 동물문화전문기자",email:"news1-1004@news1.kr",phone:"010-4193-7293",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:63,note:"반려동물 전문 기자"},
-  {id:49,name:"이수미 (Lee Sumi)",company:"K-웰니스뉴스",title:"기자",email:"betty1954@naver.com",phone:"010-8669-9894",lang:"한국어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:""},
-  {id:50,name:"류난영 (Ryu Nan Young)",company:"NEWSIS",title:"편집국 금융·증권부 기자",email:"you@newsis.com",phone:"010-2060-8883",lang:"한국어/영어",country:"한국",industry:"미디어/언론",type:"미디어",score:51,note:""},
-  {id:51,name:"Ning Ning",company:"Shandong Saixi Pet Food Co., Ltd",title:"Marketing Director",email:"",phone:"156 5321 0885",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:70,note:""},
-  {id:52,name:"Zhu Yongpei",company:"Shandong MarsBowl Biotechnology Co., Ltd",title:"Vice General Manager",email:"275041916@qq.com",phone:"159 6376 7818",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:85,note:"이름 불명"},
-  {id:53,name:"Lei Hong(蕾红)",company:"Shandong Xingcheng Pet Food Co., Ltd (STARPETS)",title:"International Trade Director",email:"",phone:"18763483631",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:70,note:"동일 인물 앞뒤면"},
-  {id:54,name:"Zhu Dongfang",company:"Shandong Zhichong Biotechnology Co., Ltd.",title:"",email:"standard.zrichco@bootleg.co.kr",phone:"015554955626",lang:"중국어",country:"중국",industry:"기타",type:"바이어",score:36,note:"일부 정보 불명확"},
-  {id:55,name:"조은주",company:"Gecko Land",title:"공동대표",email:"",phone:"010-6348-6734",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:43,note:""},
-  {id:56,name:"Jeong Po Won",company:"",title:"Breeder",email:"",phone:"010-6803-4403",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:58,note:""},
-  {id:57,name:"모 마녀",company:"",title:"",email:"",phone:"010-7656-6017",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:21,note:"Insta : @mo.witch"},
-  {id:58,name:"천재용",company:"",title:"",email:"",phone:"010-6418-5383",lang:"한국어",country:"한국",industry:"식품/F&B",type:"부스",score:36,note:"이름 불명확"},
-  {id:59,name:"홍종희 (HONG JONG HEE)",company:"",title:"",email:"",phone:"+82 010-3420-1050",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:21,note:"QR코드 포함"},
-  {id:60,name:"이정오",company:"이오하모니",title:"대표이사",email:"eoharmony22@gmail.com",phone:"010-3314-3023",lang:"한국어",country:"한국",industry:"식품/F&B",type:"부스",score:73,note:""},
-  {id:61,name:"차익주",company:"박영사",title:"콘텐츠 R&D팀 팀장",email:"mktking@pybook.co.kr",phone:"010-7105-5443",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:48,note:"빨간색 명함, 이름 불명"},
-  {id:62,name:"김미숙 (Kim Mi-Sug)",company:"한국식물레이아웃협회 KPLA",title:"",email:"ipp313@naver.com",phone:"01062199492",lang:"한국어/영어",country:"한국",industry:"유통/무역",type:"바이어",score:63,note:"이름 불명"},
-  {id:63,name:"송서형",company:"도마뱀스토리",title:"",email:"",phone:"010-5025-8835",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:21,note:"Instagram : @s_gecko_2008"},
-  {id:64,name:"이한구 (LEE HANGU)",company:"",title:"COO / 점장",email:"crebirdie@gmail.com",phone:"010-8073-2196",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:36,note:""},
-  {id:65,name:"양애경 (YANG AEKYUNG)",company:"",title:"CEO / 대표",email:"crebirdie@gmail.com",phone:"010-3000-1576",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:58,note:"이한구(_09)와 같은 회사/장소"},
-  {id:66,name:"Li Jinqi",company:"康维生物医药有限公司 (KANGWEI BIOLOGY)",title:"总经理 (총경리)",email:"qdkwsw@163.com",phone:"18363953298",lang:"중국어/영어",country:"중국",industry:"유통/무역",type:"바이어",score:63,note:""},
-  {id:67,name:"ZHENG LIJIAN",company:"NUOOU (诺欧)",title:"업무 담당",email:"sales@noropet.com",phone:"19527927613",lang:"중국어/영어",country:"중국",industry:"반려동물/펫케어",type:"바이어",score:77,note:"凍乾(동결건조) 펫푸드 전문 / 슬로건: 专注冻干 赋能品牌 / QR코드 있음(WeChat)"},
-  {id:68,name:"Ji Xueji",company:"山东迈旭生物科技有限公司",title:"业务经理 (영업매니저)",email:"",phone:"152 6464 8067",lang:"중국어",country:"중국",industry:"바이오/연구",type:"바이어",score:21,note:"핸드라이팅: E7585 / QR코드 있음(WeChat) / 브라질로 오분류→수정"},
-  {id:69,name:"Lison Lin",company:"榮麻國際股份有限公司 (Shenli International Design Co.,LTD.)",title:"執行長 / CEO",email:"lison@shenli2019.com",phone:"+886 912-608988",lang:"중국어/영어",country:"대만",industry:"디자인",type:"바이어",score:58,note:"QR코드 2개 포함"},
-  {id:70,name:"정재열 (Jae-Yuil Jung)",company:"주식회사 솔팩 (SOLPAC)",title:"기술영업부/전무이사",email:"jung@solpac.co.kr",phone:"010-5352-5715",lang:"한국어/영어",country:"한국",industry:"제조업",type:"부스",score:48,note:"핸드라이팅: 스틱포장기(종근당) -> 츄르같은 간식용 포장"},
-  {id:71,name:"정기웅",company:"국제지속가능인증원 (IGSC)",title:"인증심사팀/팀장",email:"kiwoong.jung@igsc.kr",phone:"010-8809-1550",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:48,note:"카드 기울어져 연락처 일부 불명"},
-  {id:72,name:"김아현 (Kim A hyun)",company:"DOGLORY (도글로리)",title:"General Manager",email:"doglory@naver.com",phone:"010-5728-8289",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:"팩스: 02-2272-2146 / 핸드라이팅: 3E609 강아지 미용구 스트레스"},
-  {id:73,name:"",company:"POOP OUT",title:"",email:"",phone:"",lang:"중국어/영어",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:48,note:"이름 불명 / 2023 GOLD Awards, 2021 SELECT USA No.3 Tech Award / 뒷면만 촬영됨"},
-  {id:74,name:"Jonathan J. Lee",company:"PT. Indowooyang",title:"Director",email:"",phone:"+62-813-9297-4634",lang:"영어",country:"인도네시아",industry:"유통/무역",type:"바이어",score:60,note:"카드 기울어져 일부 정보 불명"},
-  {id:75,name:"Terry Lu",company:"M.Style Japan Corp. (BI-SU)",title:"International Business Department Division Director",email:"terry-lu@mstyle-j.co.jp",phone:"+(0)92-406-4564",lang:"영어/일본어",country:"일본",industry:"반려동물/펫케어",type:"바이어",score:85,note:"팩스: +81(0)92-406-4565 / BI-SU 브랜드 카드"},
-  {id:76,name:"Lewis Lin",company:"WONSON TAIWAN INC.",title:"General Manager",email:"lewis@wonson.com.tw",phone:"0935-768-884",lang:"중국어/영어",country:"대만",industry:"유통/무역",type:"바이어",score:75,note:"팩스: 02-2563-3340"},
-  {id:77,name:"Alyssa Wu",company:"BLUEBERRY",title:"Managing Director",email:"taiwanblueberry@gmail.com",phone:"886989218782",lang:"영어/중국어",country:"대만",industry:"반려동물/펫케어",type:"바이어",score:85,note:"SELECT SHOP FOR PETS 추정 / 카드 하단 정보 가려져 연락처 불명"},
-  {id:78,name:"노영주 (Noh Young Ju)",company:"DALIAN ZHIHUI FISHERY GROUP CO.,LTD",title:"한국지사 대표",email:"nyj1328@naver.com",phone:"010-8286-6865",lang:"한국어/중국어",country:"중국",industry:"식품/F&B",type:"바이어",score:73,note:"황금색 카드 / 뒤집혀 있어 이름 불명 / 팩스: 02-555-4052"},
-  {id:79,name:"이준범 (Lee Junbeom)",company:"코스맥스㈜ COSMAX",title:"HC Lab. 3팀 / 연구원",email:"junbeom.lee@cosmax.com",phone:"010-3692-7914",lang:"한국어",country:"한국",industry:"화장품",type:"스폰서",score:55,note:"회전 촬영"},
-  {id:80,name:"김보은",company:"코스맥스㈜ COSMAX",title:"HC3 / 책임연구원",email:"bekim@cosmax.com",phone:"010-9728-8907",lang:"한국어",country:"한국",industry:"화장품",type:"스폰서",score:55,note:"회전 촬영, 이름 미확인"},
-  {id:81,name:"김유라 (Yura Kim)",company:"코스맥스펫㈜ COSMAXPET",title:"마케팅팀 전략파트 / 매니저",email:"yura.kim@cosmax.com",phone:"010-8661-3793",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"스폰서",score:73,note:"회전 촬영"},
-  {id:82,name:"신상우",company:"수협중앙회 K-FISH",title:"방콕무역지원센터/과장",email:"kfishbkk@gmail.com",phone:"+66-98-926-9337",lang:"한국어/영어",country:"태국",industry:"식품/F&B",type:"바이어",score:51,note:"회전 촬영, 한국 수산물 태국지사"},
-  {id:83,name:"박성용",company:"메타펫주식회사 (Metapet)",title:"대표이사",email:"ceo@metapetcorp.com",phone:"010-6795-1825",lang:"한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:95,note:"회전 촬영"},
-  {id:84,name:"최종권 (CHOE JONG KWON)",company:"CTCBIO VIET NAM",title:"Pet Division Manager (펫사업부장)",email:"jk@petlike.com.vn",phone:"+84-934-840-724",lang:"영어",country:"베트남",industry:"반려동물/펫케어",type:"바이어",score:85,note:""},
-  {id:85,name:"Luu Thi Ngoc Lan (Ms Lanny)",company:"Fusion Group™",title:"Purchasing Department",email:"lanltn@fusiongroup.vn",phone:"+84-975-571-495",lang:"영어",country:"베트남",industry:"식품/F&B",type:"바이어",score:51,note:"QR코드 있음"},
-  {id:86,name:"이상연 (Sean Lee)",company:"구룸 (shopguroom.com)",title:"Cofounder",email:"info@shopguroom.com",phone:"",lang:"영어/한국어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:85,note:"Kakao: seans.lee01 | Instagram: @guroom.co"}
+  {id:1,name:"이욱진 (YOUNG HYUN Robotics)",company:"영현로보틱스",company_en:"영현로보틱스",title:"대표이사",title_en:"대표이사",email:"robotics@young-hyun.com",phone:"010-3500-9710",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.young-hyun.com"},
+  {id:2,name:"김철 (Kim Cheol)",company:"(주) 디아이테크 DI TECH CO.,LTD",company_en:"(주) 디아이테크 DI TECH CO.,LTD",title:"이사",title_en:"이사",email:"doitpdlc@gmail.com",phone:"010-3609-5432",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.doitpdlc.co.kr"},
+  {id:3,name:"박준규",company:"",company_en:"",title:"공학박사 대표이사",title_en:"공학박사 대표이사",email:"imeditech@imeditech.kr",phone:"010-9103-3055",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:4,name:"견종빈",company:"(주)루트랩",company_en:"(주)루트랩",title:"선임연구원",title_en:"선임연구원",email:"jbGyeon@rootlab.xyz",phone:"010-5128-3505",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:""},
+  {id:5,name:"Chul Ju Lee",company:"GOOD TO GREAT HUMENIC",company_en:"GOOD TO GREAT HUMENIC",title:"Assistant Manager",title_en:"Assistant Manager",email:"endless530@humenic.co.kr",phone:"821093550303",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.humenic.co.kr"},
+  {id:6,name:"권혁길 (Kwon Hyuk Gil)",company:"(재)원주의료기기테크노밸리",company_en:"(재)원주의료기기테크노밸리",title:"과장 Manager",title_en:"과장 Manager",email:"road9584@wmit.or.kr",phone:"010-2209-9584",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.wmit.or.kr"},
+  {id:7,name:"김주연",company:"(주)디알젬",company_en:"(주)디알젬",title:"대리",title_en:"대리",email:"kimjy@drgem.co.kr",phone:"010-8462-0150",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.drgem.co.kr"},
+  {id:8,name:"박종명",company:"(주)퍼즐에이아이",company_en:"(주)퍼즐에이아이",title:"차장",title_en:"차장",email:"jmjm@puzzle-ai.com",phone:"010-9363-6196",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.puzzle-ai.com"},
+  {id:9,name:"은상현",company:"",company_en:"",title:"팀장",title_en:"팀장",email:"modinex@modinex.co.kr",phone:"010-3373-2924",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: https://www.modinex.co.kr"},
+  {id:10,name:"신건수",company:"연세대학교 원주연세의료원",company_en:"연세대학교 원주연세의료원",title:"연구원",title_en:"연구원",email:"tlsrjstn788@naver.com",phone:"010-2125-4475",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:11,name:"배석민",company:"",company_en:"",title:"파트장",title_en:"파트장",email:"bsm0530@triupcorp.com",phone:"010-7643-2038",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.triupcorp.com"},
+  {id:12,name:"정동석",company:"JASAN Agency., Ltd.",company_en:"JASAN Agency., Ltd.",title:"대표이사",title_en:"대표이사",email:"lionking0212@ naver.com",phone:"010-4646-5741",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:13,name:"김영필",company:"베스트메디칼",company_en:"베스트메디칼",title:"대표",title_en:"대표",email:"0220670@hanmail.net",phone:"010-9854-3235",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:14,name:"양준우",company:"식품의약품안전처",company_en:"식품의약품안전처",title:"CEO",title_en:"CEO",email:"infyni@infynimedical.com",phone:"010-2716-7137",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:15,name:"박소망",company:"(주)유투바이오",company_en:"(주)유투바이오",title:"과장",title_en:"과장",email:"thakd@u2bio.com",phone:"010-8295-2609",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.u2bio.com"},
+  {id:16,name:"김도수",company:"경북대학교기술지주(주)",company_en:"경북대학교기술지주(주)",title:"책임연구원",title_en:"책임연구원",email:"dosudang@knu.ac.kr",phone:"010-6525-6621",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:""},
+  {id:17,name:"김일중",company:"(주) 브이웨이",company_en:"(주) 브이웨이",title:"부장",title_en:"부장",email:"ijkim@vwaycorp.com",phone:"010-7360-5878",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.vwaycorp.com"},
+  {id:18,name:"임준수",company:"(주) 브이웨이",company_en:"(주) 브이웨이",title:"대리",title_en:"대리",email:"jslim@vwaycorp.com",phone:"010-5559-8111",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.vwaycorp.com"},
+  {id:19,name:"Rakesh Kumar Shukla",company:"HARMONY PHDCCIHD AND INUSY",company_en:"HARMONY PHDCCIHD AND INUSY",title:"Joint Secretary",title_en:"Joint Secretary",email:"rakesh.shukla@phdcci.in",phone:"+91-9871600922",lang:"영어",country:"인도",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.phdcci.in"},
+  {id:20,name:"차민철 (Minchul Cha)",company:"|주|맥스트",company_en:"|주|맥스트",title:"팀장 Team Leader",title_en:"팀장 Team Leader",email:"mccha@maxst.com",phone:"+821029120732",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.maxst.com"},
+  {id:21,name:"박진아 (Jina Park)",company:"|주|맥스트",company_en:"|주|맥스트",title:"책임 Senior Manager",title_en:"책임 Senior Manager",email:"jnpark@maxst.com",phone:"+821034486303",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.maxst.com"},
+  {id:22,name:"김문현",company:"올포랜드",company_en:"올포랜드",title:"부장",title_en:"부장",email:"bulsae379@all4land.com",phone:"010-2643-5604",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:23,name:"이종훈 (Ethan Lee)",company:"(주)스페이셜코어",company_en:"(주)스페이셜코어",title:"대표이사 CEO",title_en:"대표이사 CEO",email:"ethan@spatialcore.ai",phone:"010-9918-3691",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.SpatialCore.Ai"},
+  {id:24,name:"권순효",company:"강동경희대학교병원",company_en:"강동경희대학교병원",title:"조교수 전문의 피부과",title_en:"조교수 전문의 피부과",email:"soonhyo17@hanmail.net",phone:"010-9271-5532",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:25,name:"AMIT VERMA",company:"HIMSS",company_en:"HIMSS",title:"Country Manager, India",title_en:"Country Manager, India",email:"amit.verma@himss.org",phone:"+919999354563",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://himss.org"},
+  {id:26,name:"최병웅",company:"첨단정보통신융합산업기술원 Institute ofAdvanced Convergence Technology",company_en:"첨단정보통신융합산업기술원 Institute ofAdvanced Convergence Technology",title:"전임연구원",title_en:"전임연구원",email:"choe88@iact.or.kr",phone:"010-4662-4609",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.iact.or.kr"},
+  {id:27,name:"조새래",company:"인천관광공사",company_en:"인천관광공사",title:"대리",title_en:"대리",email:"saerae@ito.or.kr",phone:"010-6431-6731",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:28,name:"Wiriya Mahikul",company:"CHULABHORN ROYAL ACADEMY",company_en:"CHULABHORN ROYAL ACADEMY",title:"Ph.D. Lecturer",title_en:"Ph.D. Lecturer",email:"wiriya.mah@cra.ac.th",phone:"669-5737-5244",lang:"영어",country:"태국",industry:"기타",type:"부스",score:0,note:""},
+  {id:29,name:"박정찬 (Jungchan Park)",company:"(주)에이아이트릭스 AITRICS Co.,Ltd.",company_en:"(주)에이아이트릭스 AITRICS Co.,Ltd.",title:"Service Planning Manager Virtual Doctor",title_en:"Service Planning Manager Virtual Doctor",email:"chad@aitrics.com",phone:"+82-10-9914-6417",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:""},
+  {id:30,name:"LetinAR Letin",company:"",company_en:"",title:"Sales Representative",title_en:"Sales Representative",email:"sales@letinar.com",phone:"822-6959-7007",lang:"영어/한국어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://letinar.com"},
+  {id:31,name:"김종철 (JongCheol Kim)",company:"(주)모션테크놀로지 Motion Technologies, Inc.",company_en:"(주)모션테크놀로지 Motion Technologies, Inc.",title:"부장 Sales Manager",title_en:"부장 Sales Manager",email:"cgleo@motioncapture.co.kr",phone:"010-4895-6601",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: https://www.MotionCapture.co.kr https://www.VRmotion.co https://www.facebook.com/motiontech"},
+  {id:32,name:"wen Lan",company:"安安集団有限公司 安だ集団 ANFA Chemical (HZ) CO., LTD",company_en:"ANFA Chemical (HZ) CO., LTD",title:"",title_en:"",email:"sales@anfacorp.cn wenwen.lan@anfacorp.cn",phone:"+86-13695705199",lang:"영어/중국어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://Http://www.anfacorp.cn"},
+  {id:33,name:"Taylor A",company:"부스배치도 300 FAIRSKY INDUSTRIAL CO., LIMITED",company_en:"부스배치도 300 FAIRSKY INDUSTRIAL CO., LIMITED",title:"Marketing Director",title_en:"Marketing Director",email:"taylor@fairskyindustrial.com",phone:"86-1593124 0104",lang:"영어",country:"중국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.fairskyindustrial.com"},
+  {id:34,name:"김진수",company:"(주) 지엠이바이오",company_en:"(주) 지엠이바이오",title:"대리",title_en:"대리",email:"kjs911@gmebio.co.kr",phone:"010-2970-1463",lang:"한국어/영어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.gmebio.co.kr"},
+  {id:35,name:"정민규",company:"(주)마이크로녹스",company_en:"(주)마이크로녹스",title:"연구원",title_en:"연구원",email:"mgjeong@micronox.co.kr",phone:"010-5102-7294",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:"웹사이트: http://www.micronox.co.kr"},
+  {id:36,name:"안광호",company:"지아이에프코리아",company_en:"지아이에프코리아",title:"차장",title_en:"차장",email:"khan@gif-korea.com",phone:"010-9445-5720",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.gifkorea.co.kr"},
+  {id:37,name:"김진의",company:"(사)대한방사선사협회 서울특별시회",company_en:"Korean Association of Radiographers, Seoul, Korea",title:"총무이사 総務理事",title_en:"Director of General Affairs",email:"kim20425@hanmail.net",phone:"010-4874-2437",lang:"한국어/영어/중국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:""},
+  {id:38,name:"남대웅",company:"(사)대한방사선사협회 서울특별시회",company_en:"Korean Association of Radiographers, Seoul, Korea",title:"홍보이사 弘報理事",title_en:"Public Relations Director",email:"srtanamc@gmail.com",phone:"010-9153-9396",lang:"한국어/영어/중국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:39,name:"Taeyong Shin",company:"RX Japan Ltd.",company_en:"RX Japan Ltd.",title:"Chief",title_en:"Chief",email:"taeyong.shin@rxglobal.com",phone:"+81-80-4098-7120",lang:"영어",country:"일본",industry:"기타",type:"부스",score:0,note:""},
+  {id:40,name:"이성주",company:"코엑스",company_en:"코엑스",title:"부장",title_en:"부장",email:"lsj@coex.co.kr",phone:"010-3335-1987",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.kosignshow.co.kr www.coex.co.kr"},
+  {id:41,name:"박병렬",company:"HANCOM",company_en:"HANCOM",title:"팀장",title_en:"팀장",email:"byeongryul.park@hancom.com",phone:"010-9384-0312",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.hancom.com"},
+  {id:42,name:"Romertta Kim",company:"시프트테크놀로지스코리아(유)",company_en:"시프트테크놀로지스코리아(유)",title:"Technologies",title_en:"Technologies",email:"rome.kim@syft.com",phone:"+82-10-3735-8679",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.syft.com"},
+  {id:43,name:"정연준",company:"건국대학교병원 KONKUK UNIVERSITY MEDICAL CENTER",company_en:"건국대학교병원 KONKUK UNIVERSITY MEDICAL CENTER",title:"파트장",title_en:"파트장",email:"yjjung@kuh.ac.kr",phone:"010-3125-1789",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.kuh.ac.kr"},
+  {id:44,name:"서국한 (STEVE KHAN KOYHIA KO HUM)",company:"REA VIRTUALAN INDUSTRY ASSOCIATION (사)한국버추얼휴먼산업협회",company_en:"REA VIRTUALAN INDUSTRY ASSOCIATION (사)한국버추얼휴먼산업협회",title:"협회장",title_en:"협회장",email:"westkorea@dooribun.com",phone:"010-9394-5929",lang:"영어/한국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:45,name:"A. Chaitanya Kumar",company:"IndustryARC",company_en:"IndustryARC",title:"C.E.O Co-Founder",title_en:"C.E.O Co-Founder",email:"kumar@industryarc.com",phone:"Hyderabad-500081",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.industryarc.com"},
+  {id:46,name:"이예성",company:"사단 한국의료기기산업협회 Korea Medical Devices Industry Association",company_en:"사단 한국의료기기산업협회 Korea Medical Devices Industry Association",title:"팀원",title_en:"팀원",email:"yuio7896@kmdia.or.kr",phone:"010-4539-0162",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.kmdia.or.kr"},
+  {id:47,name:"이혜정",company:"주한덴마크대사관",company_en:"주한덴마크대사관",title:"선임상무관",title_en:"선임상무관",email:"hyejug@um.dk",phone:"010-9182-3444",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.sydkorea.um.dk"},
+  {id:48,name:"조종일 (CHO JONGIL)",company:"MEGAZONE HEALTHCARE",company_en:"MEGAZONE HEALTHCARE",title:"DH 기업부설연구소장 이사 Vice President",title_en:"DH 기업부설연구소장 이사 Vice President",email:"jicho@mz.co.kr",phone:"+82.10.3798.1049",lang:"영어/한국어",country:"기타",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:49,name:"김도연 (Doyeon Kim)",company:"티맥스티베로 TmaxTibero",company_en:"티맥스티베로 TmaxTibero",title:"BA Manager",title_en:"BA Manager",email:"doyeon_kim4@tmax.co.kr",phone:"010-7209-8627",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:50,name:"김민정",company:"한국방송통신전파진흥원",company_en:"한국방송통신전파진흥원",title:"대리",title_en:"대리",email:"minjeong326@kca.kr",phone:"010-5883-0790",lang:"한국어/영어",country:"한국",industry:"미디어/언론",type:"미디어",score:0,note:"웹사이트: http://www.kca.kr"},
+  {id:51,name:"이슬 (ILee Seul)",company:"(주)유라스텍 EurasTech Corp.",company_en:"(주)유라스텍 EurasTech Corp.",title:"과장 Manager",title_en:"과장 Manager",email:"tech@eurastech.com",phone:"+82 106850 7111",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.eurastech.com"},
+  {id:52,name:"신채리",company:"주식회사 픽셀로",company_en:"주식회사 픽셀로",title:"프로",title_en:"프로",email:"scherry1094@pixelro.com",phone:"+82-10-4157-1094",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.pixelro.com"},
+  {id:53,name:"추현곤",company:"한국전자통신연구원",company_en:"한국전자통신연구원",title:"책임연구원 박사 장",title_en:"책임연구원 박사 장",email:"hyongonchoo@etri.re.kr",phone:"042-860-1856",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:"웹사이트: http://www.etri.re.kr"},
+  {id:54,name:"황희정",company:"대한병원정보협회 Korea Information Technology of HosodalAssociation",company_en:"대한병원정보협회 Korea Information Technology of HosodalAssociation",title:"책임연구원",title_en:"책임연구원",email:"puresina@gmail.com",phone:"010-3575-8485",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:55,name:"성수한",company:"(주)와이즈맥스",company_en:"(주)와이즈맥스",title:"매니저",title_en:"매니저",email:"ssh@wismax.co.kr",phone:"010-7738-7245",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.wismax.co.kr"},
+  {id:56,name:"이주현",company:"DK메디칼솔루션(주)",company_en:"DK메디칼솔루션(주)",title:"장",title_en:"장",email:"juhlee@dk.co.kr",phone:"010-4076-3498",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.dkms.co.kr"},
+  {id:57,name:"이종헌 (Lee Jong Heon)",company:"TriBell Lab",company_en:"TriBell Lab",title:"대리 Assistant Manager",title_en:"대리 Assistant Manager",email:"Is6458@tribell-lab.com",phone:"+82-10-4503-6465",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.tribell-lab.com"},
+  {id:58,name:"오환진",company:"메인텍(주)",company_en:"메인텍(주)",title:"차장",title_en:"차장",email:"meinntech@meinntech.com",phone:"010-2514-9003",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.meinntech.com"},
+  {id:59,name:"송용수",company:"Google Cloud 구글코리아",company_en:"Google Cloud 구글코리아",title:"Sales Specialist",title_en:"Sales Specialist",email:"matthewsong@google.com",phone:"010-5021-7997",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://pace.google.com"},
+  {id:60,name:"박철민",company:"더존비즈온",company_en:"더존비즈온",title:"투자심사역 과장",title_en:"투자심사역 과장",email:"suraid@douzone.com",phone:"010-6293-5123",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.douzone.com"},
+  {id:61,name:"전정취",company:"더존비즈온",company_en:"더존비즈온",title:"투자심사역 장",title_en:"투자심사역 장",email:"jccheon@douzone.com",phone:"010-6701-1237",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.douzone.com"},
+  {id:62,name:"민병훈",company:"한국자동차연구원",company_en:"한국자동차연구원",title:"연구위원",title_en:"연구위원",email:"bhmin@katech.re.kr",phone:"010-8904-6179",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:"웹사이트: http://www.katech.re.kr"},
+  {id:63,name:"서정국",company:"(주)엘팩토리",company_en:"(주)엘팩토리",title:"본부장 본부장",title_en:"본부장 본부장",email:"sjk@elfactory.co.kr",phone:"010-7392-4816",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.bluecanvas.com"},
+  {id:64,name:"우현김",company:"210만원",company_en:"210만원",title:"컨택",title_en:"컨택",email:"woohyun.kim@industryarc.com",phone:"010-3653-6356",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.industryarc.co.kr"},
+  {id:65,name:"이정훈",company:"한국과학기술정보연구원 Korea Institute of Science and Technology Information",company_en:"한국과학기술정보연구원 Korea Institute of Science and Technology Information",title:"책임연구원 공학박사",title_en:"책임연구원 공학박사",email:"jhoon@kisti.re.kr jhoon@kaist.edu",phone:"010-8300-7411",lang:"영어/한국어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:""},
+  {id:66,name:"B Thiagarajan",company:"BLUE STAR Blue Star Limited",company_en:"BLUE STAR Blue Star Limited",title:"Managing Director",title_en:"Managing Director",email:"bthiagarajan@bluestarindia.com",phone:"+919600034725",lang:"영어",country:"인도",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.bluestarindia.com"},
+  {id:67,name:"장재욱 (Louis Jang)",company:"(주) 컨트롤유니온코리아",company_en:"(주) 컨트롤유니온코리아",title:"General Marketing Manager",title_en:"General Marketing Manager",email:"louisjang@controlunion.com",phone:"+821089938645",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:68,name:"이종훈 (JHLee)",company:"",company_en:"",title:"팀장",title_en:"팀장",email:"hitmanv@myctns.com",phone:"58923949",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:69,name:"JT Luo",company:"KATOP Automation Co., Ltd.",company_en:"KATOP Automation Co., Ltd.",title:"Senior Account Manager",title_en:"Senior Account Manager",email:"luojt@katopauto.com",phone:"+8618589049420",lang:"영어",country:"중국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.katopauto.com"},
+  {id:70,name:"이재영",company:"",company_en:"",title:"Co-founder COO",title_en:"Co-founder COO",email:"jy@studiolab.ai",phone:"+8210-4405-2115",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.studiolab.ai"},
+  {id:71,name:"김영구 (Jason Kim)",company:"DMC (NGM) [주]동문",company_en:"DMC (NGM) [주]동문",title:"Executive Director",title_en:"Executive Director",email:"jasonkim@dong-mun.co.kr",phone:"010-2262-0909",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.dong-mun.net"},
+  {id:72,name:"홍설혜 (Seolhye Hong Snow)",company:"cog",company_en:"cog",title:"PR Manager",title_en:"PR Manager",email:"snow@emocog.com",phone:"+8210.2938.1877",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.emocog.com"},
+  {id:73,name:"윤정연",company:"한국문화정보원",company_en:"한국문화정보원",title:"책임",title_en:"책임",email:"start227@kcisa.kr",phone:"010-4077-7010",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:74,name:"정성민",company:"더존비즈온 KOSPI",company_en:"더존비즈온 KOSPI",title:"투자심사역 대리",title_en:"투자심사역 대리",email:"lintheart@douzone.com",phone:"010-7236-3276",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.douzone.com"},
+  {id:75,name:"신승호 (Seungho Shin)",company:"(주)올림플래닛",company_en:"(주)올림플래닛",title:"상무 CBO",title_en:"상무 CBO",email:"shshin@olimplanet.com",phone:"+821032498150",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:76,name:"배나영",company:"주식회사 메디칼파크",company_en:"주식회사 메디칼파크",title:"대리",title_en:"대리",email:"nybae@medicalpark.co.kr",phone:"010-9973-7458",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:77,name:"지광훈",company:"주청은",company_en:"주청은",title:"과장",title_en:"과장",email:"sales@hbotmedical.com",phone:"010-2405-7607",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.hbotmedical.com"},
+  {id:78,name:"이권수",company:"한국문화정보원",company_en:"한국문화정보원",title:"부장 팀장",title_en:"부장 팀장",email:"leegs75@kcisa.kr",phone:"010-6284-1370",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:79,name:"최원광",company:"(주)해인21",company_en:"(주)해인21",title:"팀장",title_en:"팀장",email:"haein21@hi21.co.kr",phone:"010-4189-4148",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.hi-sanitary.com"},
+  {id:80,name:"Rainy",company:"Hebei Pengfa Chemical Co., Ltd. Huanghua Pengfa Chemical Co., Ltd.",company_en:"Hebei Pengfa Chemical Co., Ltd. Huanghua Pengfa Chemical Co., Ltd.",title:"소래匠 페인트사와 Director",title_en:"소래匠 페인트사와 Director",email:"rainy@hhpfchem.com",phone:"+8618931799878",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.pengfachemical.com www.hhpfchem.com"},
+  {id:81,name:"이수원",company:"문화체육관광부",company_en:"문화체육관광부",title:"과장",title_en:"과장",email:"suwonlee@korea.kr",phone:"010-6576-9419",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.mcst.go.kr"},
+  {id:82,name:"이희구",company:"주식 후쏘코리아 회사US 합자회사",company_en:"주식 후쏘코리아 회사US 합자회사",title:"차장",title_en:"차장",email:"hglee@fussokorea.co.kr",phone:"010-8588-2015",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.fussokorea.co.kr"},
+  {id:83,name:"최용상중군",company:"펜잘큐정",company_en:"펜잘큐정",title:"차장",title_en:"차장",email:"choiys@ckdpharm.com",phone:"010-3462-9686",lang:"한국어/영어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:84,name:"김세훈 (Se-hoon Kim)",company:"벨아이앤에스",company_en:"벨아이앤에스",title:"영업대표",title_en:"영업대표",email:"shkim@bellins.net",phone:"+821091465971",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.bellins.net"},
+  {id:85,name:"이기쁨 (Joy Lee)",company:"한국의학바이오기자협회 KoreanAssc. ofMedicalJournalists.",company_en:"한국의학바이오기자협회 KoreanAssc. ofMedicalJournalists.",title:"사무국장 Secretary General",title_en:"사무국장 Secretary General",email:"kamj2022@gmail.com",phone:"010-3613-0556",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.kmbj.org"},
+  {id:86,name:"Justin Park",company:"dfang",company_en:"dfang",title:"Head Of Department",title_en:"Head Of Department",email:"ddco@ddco.kr",phone:"82-10-2749-2145",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.dfang.co.kr www.dfangglobal.com"},
+  {id:87,name:"Kate Park",company:"FAIR GROUND INCORPORATED",company_en:"FAIR GROUND INCORPORATED",title:"President",title_en:"President",email:"katepark0419@gmail.com",phone:"+63288961206 +639176283263",lang:"영어",country:"기타",industry:"IT/기술",type:"부스",score:0,note:""},
+  {id:88,name:"강리아",company:"코튼독",company_en:"코튼독",title:"대표",title_en:"대표",email:"petitgora@naver.com",phone:"+821049269996",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.cottondog.co.kr"},
+  {id:89,name:"전수민",company:"Baenaet",company_en:"Baenaet",title:"대표 패션디자인학 박사",title_en:"대표 패션디자인학 박사",email:"born-0301@naver.com",phone:"8 01092271264",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: https://bornbaenaet.com https://www.instagram.com/bornbb_official"},
+  {id:90,name:"나진희 (JinHui Na)",company:"더위크앤 리조트",company_en:"더위크앤 리조트",title:"Manager 매니저",title_en:"Manager 매니저",email:"jinhui.na@theweekandresort.com",phone:"+821022165261",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://theweekand_resort"},
+  {id:91,name:"권민서 (KWON MIN SEO)",company:"주식회사 오앤권",company_en:"주식회사 오앤권",title:"대표이사 CEO",title_en:"대표이사 CEO",email:"ritogato@naver.com",phone:"010-8750-3643",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.ritogato.com"},
+  {id:92,name:"이재준",company:"(주)큐더스 이노베이션",company_en:"(주)큐더스 이노베이션",title:"부사장",title_en:"부사장",email:"kudos@kudosinnovation.com jj@kudosinnovation.com",phone:"010-3118-4543",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.kudosinnovation.com"},
+  {id:93,name:"윤지현",company:"알바생 페리",company_en:"알바생 페리",title:"페티그램 대표이사",title_en:"페티그램 대표이사",email:"9wol1@naver.com",phone:"010-5044-2201",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.9wol1.com"},
+  {id:94,name:"손지현 (Ally Son)",company:"(주) 와이즈벨컴퍼니",company_en:"(주) 와이즈벨컴퍼니",title:"이사 Director",title_en:"이사 Director",email:"info@wisebell.co.kr",phone:"821099838306",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.wisebell.co.kr"},
+  {id:95,name:"신창환 (Shin Chang Hwan)",company:"대주산업주식회사 DAEJOO INC.",company_en:"대주산업주식회사 DAEJOO INC.",title:"부장 Director",title_en:"부장 Director",email:"happychang@daejooinc.com",phone:"010-6533-3830",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:96,name:"이상휘 (WILLY)",company:"윌리스빌",company_en:"윌리스빌",title:"CEO",title_en:"CEO",email:"willy@wlsv.kr",phone:"010-7456-4530",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://W billysvet.com"},
+  {id:97,name:"Denny Ku",company:"sistar Indonesiar company",company_en:"sistar Indonesiar company",title:"Director",title_en:"Director",email:"denny@sistarcompany.com denniiku@gmail.com",phone:"+821028400485",lang:"영어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://sistarcompany.com"},
+  {id:98,name:"김영선 (James Kim)",company:"SGlobal Inc.",company_en:"SGlobal Inc.",title:"대표이사 CEO",title_en:"대표이사 CEO",email:"sglobal@sglobalcorp.com",phone:"010-3318-3701 (+8210-3318-3701)",lang:"영어/한국어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.pealth.co.kr"},
+  {id:99,name:"홍성균",company:"슈퍼포우",company_en:"슈퍼포우",title:"CEO",title_en:"CEO",email:"skhong@superpaw.co.kr",phone:"010-5436-5403",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.superpaw.co.kr @superpaw_kr"},
+  {id:100,name:"Casey Yooun",company:"BITEME.CO.KR",company_en:"BITEME.CO.KR",title:"de",title_en:"de",email:"younglin@biteme.co.kr",phone:"+82010.2674.5104",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:101,name:"허준",company:"멍멍이대학",company_en:"멍멍이대학",title:"",title_en:"",email:"doggyuniv@gmail.com",phone:"010-3833-4607",lang:"영어/한국어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:""},
+  {id:102,name:"김성열 (Scott Kim)",company:"주식회사 스템포인트",company_en:"주식회사 스템포인트",title:"부장",title_en:"부장",email:"scott@stempoint.co.kr",phone:"010-5219-1965",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:103,name:"DogspaX Pet Washing & Grooming Products Ltd Henan Zhongzhizheng Institute of Engineering & Technology",company:"DogspaX Pet Washing & Grooming Products Ltd Henan Zhongzhizheng Institute of Engineering & Technology",company_en:"DogspaX Pet Washing & Grooming Products Ltd Henan Zhongzhizheng Institute of Engineering & Technology",title:"",title_en:"",email:"DogspaX@gmail.com",phone:"139-0385-7509",lang:"영어",country:"기타",industry:"반려동물/펫케어",type:"부스",score:0,note:"웹사이트: http://www.DogspaX.com"},
+  {id:104,name:"박정환성찬",company:"베트남 코리아 비지니스센터",company_en:"베트남 코리아 비지니스센터",title:"회장",title_en:"회장",email:"parhjh@naver.com",phone:"843-3462-4154",lang:"영어/한국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:105,name:"김호첨",company:"주식회사미꼬",company_en:"주식회사미꼬",title:"대표이사",title_en:"대표이사",email:"mikko3@naver.com|",phone:"010-3041-5754",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:106,name:"이예범이예범",company:"MGL in Thailed려견",company_en:"MGL in Thailed려견",title:"팀장 사",title_en:"팀장 사",email:"",phone:"010-8451-9084",lang:"한국어/영어",country:"한국",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.nyxenm.com"},
+  {id:107,name:"CHAKI H.K.LI",company:"B.A. CREATIONS LIMITED",company_en:"B.A. CREATIONS LIMITED",title:"Project Officer",title_en:"Project Officer",email:"chaki.hk@babejeweled.com",phone:"91105",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:108,name:"Adrian Lim",company:"",company_en:"",title:"Founder",title_en:"Founder",email:"Adrian@lunoji.com",phone:"658-870-5979",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.lunoji.com"},
+  {id:109,name:"Yu Naibo",company:"HAKA",company_en:"HAKA",title:"Product Manager",title_en:"Product Manager",email:"edisonyuineast@outlook.com",phone:"+86 13911822949",lang:"영어",country:"중국",industry:"기타",type:"부스",score:0,note:""},
+  {id:110,name:"Masumi Urakami",company:"gifttank co.,Ltd.",company_en:"gifttank co.,Ltd.",title:"Executive Adviser",title_en:"Executive Adviser",email:"info@gift-tank.com",phone:"080-3129-4599",lang:"영어",country:"일본",industry:"기타",type:"부스",score:0,note:"웹사이트: https://gift-tank.com https://gifttank.co.jp"},
+  {id:111,name:"한영 (CHAYALUCK  ORN)",company:"し TUMMASIRI",company_en:"し TUMMASIRI",title:"Managing Director",title_en:"Managing Director",email:"ketawapet@gmail.com",phone:"666-5156-9554",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:112,name:"곽문지 (moonji)",company:"6868",company_en:"6868",title:"ペット栄養管理士",title_en:"pet nutritionist",email:"info@b-inc.jp",phone:"079-824-8722",lang:"중국어/일본어/영어",country:"기타",industry:"반려동물/펫케어",type:"부스",score:0,note:""},
+  {id:113,name:"CHARINRAT WONGSALANGKUL",company:"",company_en:"",title:"Founder",title_en:"Founder",email:"peterest.project@gmail.com",phone:"+6695592 4691 +6695592 4691",lang:"영어",country:"태국",industry:"기타",type:"부스",score:0,note:""},
+  {id:114,name:"아",company:"中山市家源水族用 品手 ZhongshanJiayuan Aquarium Products Factory",company_en:"ZhongshanJiayuan Aquarium Products Factory",title:"",title_en:"",email:"annie_9080@163.com zhangyong_mjy@163.com",phone:"13590963551 1894880",lang:"영어/중국어",country:"중국",industry:"반려동물/펫케어",type:"부스",score:0,note:"웹사이트: http://Https://jiayuanled.1688.com Http://www.ledjiayuan.com"},
+  {id:115,name:"石家庄久衣砂彦品有限公司",company:"石家庄久衣砂彦品有限公司",company_en:"Shijiazhuang Jiuyi Shayan Products Co., Ltd.",title:"都",title_en:"All",email:"",phone:"156-3311-9855",lang:"중국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:116,name:"이 (Jacky Chen)",company:"Jiaxing Leyou Pet Products Co., Ltd.",company_en:"Jiaxing Leyou Pet Products Co., Ltd.",title:"International Department Manager",title_en:"International Department Manager",email:"jacky@leyoupet.com",phone:"+86400-100-7881",lang:"영어",country:"중국",industry:"반려동물/펫케어",type:"부스",score:0,note:"웹사이트: https://leyoupet. en.alibaba.com http://www.leyoupet.com/"},
+  {id:117,name:"江西海鼎科技有限公司",company:"江西海鼎科技有限公司",company_en:"Jiangxi Haiding Technology Co., Ltd.",title:"急理",title_en:"urgent principle",email:"546443599@qq.com",phone:"151-8055-6699",lang:"중국어/영어",country:"기타",industry:"IT/기술",type:"부스",score:0,note:"웹사이트: http://www.jxhaiding.cn"},
+  {id:118,name:"悦之堯貿易有限公司",company:"悦之堯貿易有限公司",company_en:"悦之堯貿易有限公司",title:"イ32 執行董事 Executive Director",title_en:"イ32 執行董事 Executive Director",email:"info@hopetcare.com",phone:"852-6110-5525",lang:"영어/중국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:119,name:"TZU CHENG WANG",company:"Pixel Lab",company_en:"Pixel Lab",title:"業務總監",title_en:"業務總監",email:"pixellabtaiwan@gmail.com",phone:"093-082-9028",lang:"영어/중국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:120,name:"채동진",company:"우송대학교",company_en:"우송대학교",title:"초빙교원",title_en:"초빙교원",email:"amoteszruna@naver.com",phone:"010-3740-2942",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:""},
+  {id:121,name:"천정민 (Jeongmin Cheon)",company:"녹십자수의약품",company_en:"녹십자수의약품",title:"영업소장 Manager CAB",title_en:"영업소장 Manager CAB",email:"jeongmin.cheon@gcvp.co.kr",phone:"+82)10-5340-4872",lang:"영어/한국어",country:"한국",industry:"의료/헬스",type:"부스",score:0,note:"웹사이트: http://www.gcvp.co.kr"},
+  {id:122,name:"김가영",company:"(주)코스트코 코리아",company_en:"(주)코스트코 코리아",title:"과장",title_en:"과장",email:"kykim@costcokr.com",phone:"010-2786-0639",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.costco.co.kr"},
+  {id:123,name:"김소연 (Soyeon Kim)",company:"LG유플러스",company_en:"LG유플러스",title:"PO",title_en:"PO",email:"sonia@lguplus.co.kr",phone:"010-9901-3014",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://lguplus.co.kr"},
+  {id:124,name:"송평화",company:"(주)평화글로벌로직스",company_en:"(주)평화글로벌로직스",title:"이사",title_en:"이사",email:"pgl526@naver.com",phone:"010-2313-0303",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.pglg.co.kr"},
+  {id:125,name:"Park Jin-Yong",company:"Jinyong Engineering co.,Ltd.",company_en:"Jinyong Engineering co.,Ltd.",title:"C.E.O",title_en:"C.E.O",email:"jyengco@naver.com",phone:"82-10-5422-2019",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.tapecaster.co.kr"},
+  {id:126,name:"박현호",company:"한국과학기술원",company_en:"한국과학기술원",title:"박사과정",title_en:"박사과정",email:"phh1121@kaist.ac.kr",phone:"010-3737-2029",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:127,name:"장수영",company:"(주)뉴스1",company_en:"(주)뉴스1",title:"기자",title_en:"기자",email:"presy@news1.kr photo@news1.kr",phone:"010-2598-1809",lang:"한국어/영어",country:"한국",industry:"기타",type:"미디어",score:0,note:"웹사이트: http://www.news1.kr"},
+  {id:128,name:"Li Fengyi",company:"Four Principles International Trade Co., Ltd",company_en:"Four Principles International Trade Co., Ltd",title:"General Manager",title_en:"General Manager",email:"lifengyi2014@126.com",phone:"+86-15311713051",lang:"영어",country:"중국",industry:"유통/무역",type:"바이어",score:0,note:"웹사이트: http://www.fourprinciple.cn"},
+  {id:129,name:"Todd Wan Lee",company:"ROSETTE EXPO INC.",company_en:"ROSETTE EXPO INC.",title:"Operation Director",title_en:"Operation Director",email:"todd.lee@rstexpo.co.kr",phone:"+82-10-4174-2124",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.rstexpo.co.kr"},
+  {id:130,name:"Jung Ji Young",company:"JUNGJIYOUNG COFFEEROASTERS",company_en:"JUNGJIYOUNG COFFEEROASTERS",title:"",title_en:"",email:"jungjiyoungcoffee @gmail.com",phone:"+821091504919",lang:"영어",country:"기타",industry:"식품/건강",type:"부스",score:0,note:"웹사이트: http://WWW.JUNGJIYOUNGCOFFEE.COM"},
+  {id:131,name:"구민지",company:"한국테라리움협회 Korea Terrarium Association",company_en:"한국테라리움협회 Korea Terrarium Association",title:"협회장",title_en:"협회장",email:"koreaterrarium2021@naver.com korea_terranum",phone:"010-5403-5675",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.koreaterrarium.kr"},
+  {id:132,name:"최서윤",company:"(주)뉴스1",company_en:"(주)뉴스1",title:"팀장 동물문화전문기자",title_en:"팀장 동물문화전문기자",email:"news1-1004@news1.kr",phone:"010-4193-7293",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"미디어",score:0,note:"웹사이트: http://www.news1.kr"},
+  {id:133,name:"이수미",company:"웰라 사단법인 한국웰니스산업협회",company_en:"웰라 사단법인 한국웰니스산업협회",title:"기자",title_en:"기자",email:"betty1954@naver.com",phone:"010-8669-9894",lang:"한국어/영어",country:"한국",industry:"기타",type:"미디어",score:0,note:"웹사이트: http://www.k-wnews.com"},
+  {id:134,name:"류난영 (Ryu Nan Young)",company:"NEWSIS",company_en:"NEWSIS",title:"기자",title_en:"기자",email:"you@newsis.com",phone:"010-2060-8883",lang:"영어/한국어",country:"한국",industry:"기타",type:"미디어",score:0,note:"웹사이트: http://www.newsis.com"},
+  {id:135,name:"NING NING MA",company:"西究物食品有限公司 SHANDONG SAIXI PETFOOD CO., LTD",company_en:"SHANDONG SAIXI PETFOOD CO., LTD",title:"RKETINGDIRECTOR 同号 W",title_en:"RKETINGDIRECTOR Same issue W",email:"",phone:"156-5321-0885",lang:"영어/중국어",country:"기타",industry:"반려동물/펫케어",type:"부스",score:0,note:""},
+  {id:136,name:"Zhu Yongpei",company:"山奈火星碗生物科技有限公司 Shandong MarsBowlBiotechnologyCo.,Ltd",company_en:"Shandong MarsBowlBiotechnologyCo.,Ltd",title:"副急経理 vice general manager",title_en:"vice general manager",email:"275041916@qq.com",phone:"159-6376-7818",lang:"영어/중국어",country:"기타",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:137,name:"연락처#137",company:"",company_en:"",title:"",title_en:"",email:"",phone:"",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:138,name:"山奈智安生物科技有限公司 shandong zhichong biotechnology Co.,LTD",company:"山奈智安生物科技有限公司 shandong zhichong biotechnology Co.,LTD",company_en:"shandong zhichong biotechnology Co.,LTD",title:"",title_en:"",email:"",phone:"155-5495-5626",lang:"중국어/영어",country:"기타",industry:"의료/헬스",type:"부스",score:0,note:""},
+  {id:139,name:"조은주",company:"GECKOLAND",company_en:"GECKOLAND",title:"공동대표",title_en:"공동대표",email:"cejhsm",phone:"010-6348-6734",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:140,name:"yeong Won",company:"",company_en:"",title:"Breeder",title_en:"Breeder",email:"gangster_papapa",phone:"010-6803-4403",lang:"영어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:141,name:"모마녀",company:"",company_en:"",title:"",title_en:"",email:"mo.witch",phone:"010-7656-6017",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://movarium"},
+  {id:142,name:"천재용",company:"기업은행",company_en:"기업은행",title:"ge",title_en:"ge",email:"hodori_cko",phone:"010-6418-5383",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:143,name:"HONG JONG HEE",company:"",company_en:"",title:"",title_en:"",email:"",phone:"+82010.3420.1050",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:144,name:"이정오",company:"(주)이오하모니",company_en:"(주)이오하모니",title:"대표이사",title_en:"대표이사",email:"eoharmony22@gmail.com",phone:"010-3314-3023",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://w eoharmony.com"},
+  {id:145,name:"박영박영시 (story)",company:"",company_en:"",title:"차익주 팀장",title_en:"차익주 팀장",email:"mktking@pybook.co.kr",phone:"010-7105-5443",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:146,name:"김미숙",company:"한국식물레이아웃협회",company_en:"한국식물레이아웃협회",title:"이사 수석작가",title_en:"이사 수석작가",email:"lpp313@naver.com",phone:"010-6219-9492",lang:"한국어/영어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:147,name:"송서형",company:"도마뱀스토리",company_en:"도마뱀스토리",title:"",title_en:"",email:"",phone:"010-5025-8835",lang:"한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:148,name:"이한구 (LEE HANGU)",company:"",company_en:"",title:"COO 점장",title_en:"COO 점장",email:"sub2196 @cre_buddy crebirdie@gmail.com",phone:"010-8073-2196",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:149,name:"양애경 (YANG AEKYUNG)",company:"",company_en:"",title:"CEO 대표",title_en:"CEO 대표",email:"crebirdie@gmail.com",phone:"010-3000-1576",lang:"영어/한국어",country:"한국",industry:"기타",type:"부스",score:0,note:""},
+  {id:150,name:"ZHENG LIJIAN",company:"",company_en:"",title:"",title_en:"",email:"sales@noropet.com",phone:"195-2792-7613",lang:"영어/중국어",country:"기타",industry:"기타",type:"부스",score:0,note:""},
+  {id:151,name:"旭生物科技育限公司",company:"旭生物科技育限公司",company_en:"Asahi Biotechnology Education Co., Ltd.",title:"理",title_en:"reason",email:"",phone:"152-6464-8067",lang:"중국어",country:"기타",industry:"반려동물/펫케어",type:"부스",score:0,note:""},
+  {id:152,name:"김보은",company:"코스맥스(주)",company_en:"코스맥스(주)",title:"책임연구원",title_en:"책임연구원",email:"bekim@cosmax.com",phone:"010-9728-8907",lang:"한국어/영어",country:"한국",industry:"교육/연구",type:"부스",score:0,note:"웹사이트: http://www.cosmax.com"},
+  {id:153,name:"김유라",company:"코스맥스펫(주)",company_en:"코스맥스펫(주)",title:"매니저",title_en:"매니저",email:"yura.kim@cosmax.com",phone:"010-8661-3793",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:0,note:"웹사이트: http://www.cosmaxpet.com"},
+  {id:154,name:"신상우",company:"수협중앙회 水力中央会",company_en:"수협중앙회 水力中央会",title:"과장",title_en:"과장",email:"kfishbkk@gmail.com",phone:"+66(0)989269337",lang:"영어/한국어",country:"태국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.suhyup.co.kr"},
+  {id:155,name:"박성용",company:"메타펫주식회사",company_en:"메타펫주식회사",title:"대표이사",title_en:"대표이사",email:"ceo@metapetcorp.com",phone:"010-6795-1825",lang:"한국어/영어",country:"한국",industry:"반려동물/펫케어",type:"부스",score:0,note:""},
+  {id:156,name:"CHOE JONG KWON",company:"CTCBIO VIET NAM",company_en:"CTCBIO VIET NAM",title:"Pet Division Manager",title_en:"Pet Division Manager",email:"jk@petlike.com.vn",phone:"849-3484-0724",lang:"영어",country:"기타",industry:"반려동물/펫케어",type:"부스",score:0,note:"웹사이트: http://www.ctcbio.com.vn"},
+  {id:157,name:"Luu Thi Ng Lan Ms Lanny",company:"Fusion Group",company_en:"Fusion Group",title:"Purchasing Department",title_en:"Purchasing Department",email:"lanltn@fusiongroup.vn",phone:"0106860781-002",lang:"영어",country:"기타",industry:"기타",type:"바이어",score:0,note:""},
+  {id:158,name:"이상연 (Sean Lee)",company:"",company_en:"",title:"Cofounder",title_en:"Cofounder",email:"seans.lee01 @guroom.co@shopguroom.com",phone:"",lang:"영어",country:"한국",industry:"기타",type:"부스",score:0,note:"웹사이트: http://www.shopguroom.com"}
 ];
 
 // ── 앱 상태 ───────────────────────────────────────────────────────────────
@@ -537,22 +656,35 @@ function renderSortRow() {
 }
 
 // ── 분류 엔진 ─────────────────────────────────────────────────────────────
+// 전시별 업종 가중치
+const SHOW_WEIGHTS = {
+  megazoo:{ pet:40, trade:25, health:15, it:12, food:12, beauty:18, edu:6, mfg:8, media:12, other:3 },
+  gocaf:  { pet:35, trade:20, health:8,  it:12, food:10, beauty:8,  edu:5, mfg:15, media:10, other:4 },
+  khf:    { pet:5,  trade:8,  health:45, it:28, food:5,  beauty:5,  edu:18, mfg:5, media:8, other:2 },
+  kfarm:  { pet:12, trade:12, health:8,  it:30, food:20, beauty:3,  edu:12, mfg:18, media:5, other:2 },
+  kocdf:  { pet:8,  trade:18, health:5,  it:8,  food:42, beauty:12, edu:5, mfg:8,  media:15, other:2 },
+};
 function classifyContact(f) {
   let score = f.score ?? 0; const reasons = [];
-  const t = (f.title||"").toLowerCase(), ind = (f.industry||"").toLowerCase(), co = (f.company||"").toLowerCase();
+  const t = ((f.title||"")+" "+(f.title_en||"")).toLowerCase();
+  const ind = (f.industry||"").toLowerCase();
+  const co = ((f.company||"")+" "+(f.company_en||"")).toLowerCase();
   if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { score+=30; reasons.push("의사결정권자"); }
   else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t)) { score+=20; reasons.push("중간관리자"); }
-  else if (/담당|coordinator|executive|specialist/.test(t)) { score+=12; reasons.push("실무 담당자"); }
+  else if (/담당|coordinator|executive|specialist|lecturer|professor/.test(t)) { score+=12; reasons.push("실무 담당자"); }
   else { score+=8; }
-  if (/반려동물|펫|pet/.test(ind)) { score+=40; reasons.push("핵심 타겟 업종"); }
-  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=30; reasons.push("유통/무역 업종"); }
-  else if (/제약|의료|헬스|health|pharma|수의/.test(ind)) { score+=25; reasons.push("헬스케어 관련"); }
-  else if (/화장품|코스메틱|cosmet/.test(ind)) { score+=22; reasons.push("뷰티/코스메틱"); }
-  else if (/it|기술|tech|통신/.test(ind)) { score+=18; reasons.push("IT/기술 업종"); }
-  else if (/미디어|언론|media|광고|방송/.test(ind)) { score+=18; reasons.push("미디어 업종"); }
-  else if (/식품|food|건강|영양/.test(ind)) { score+=18; reasons.push("식품 관련"); }
-  else if (/전시|이벤트|expo|fair/.test(ind)) { score+=15; reasons.push("전시/이벤트"); }
-  else { score+=3; reasons.push("관련도 낮은 업종"); }
+  const w = SHOW_WEIGHTS[state.event] || SHOW_WEIGHTS.megazoo;
+  if (/반려동물|펫|pet/.test(ind))                                  { score+=w.pet;    reasons.push("핵심 타겟 업종"); }
+  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=w.trade; reasons.push("유통/무역 업종"); }
+  else if (/의료|헬스|health|pharma|수의|bio|바이오/.test(ind))       { score+=w.health; reasons.push("헬스케어 관련"); }
+  else if (/화장품|코스메틱|cosmet|beauty|미용|패션/.test(ind))        { score+=w.beauty; reasons.push("뷰티/코스메틱"); }
+  else if (/it|기술|tech|통신|robot|로봇|ai|digital/.test(ind))       { score+=w.it;     reasons.push("IT/기술 업종"); }
+  else if (/미디어|언론|media|광고|방송/.test(ind))                    { score+=w.media;  reasons.push("미디어 업종"); }
+  else if (/식품|food|건강|영양|농업|축산|farm/.test(ind))              { score+=w.food;   reasons.push("식품/농업 관련"); }
+  else if (/교육|연구|research|university/.test(ind))                 { score+=w.edu;    reasons.push("교육/연구"); }
+  else if (/제조|manufact|건설|construction/.test(ind))               { score+=w.mfg;    reasons.push("제조/건설업"); }
+  else if (/전시|이벤트|expo|fair/.test(ind))                          { score+=12;       reasons.push("전시/이벤트"); }
+  else { score+=w.other; reasons.push("관련도 낮은 업종"); }
   if (f.email) { score+=15; reasons.push("이메일 보유"); }
   if (f.phone) { score+=10; reasons.push("연락처 보유"); }
   const grade = score>=70?"high":score>=40?"mid":"low";
@@ -560,7 +692,7 @@ function classifyContact(f) {
   const isBigCo = /lg|삼성|현대|롯데|sk|cj|카카오|네이버|쿠팡|아모레|애경|lotte|hyundai|samsung|purina|mars|royal canin/.test(co);
   if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자로 파트너십 적합"; }
   else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통/구매 담당으로 바이어 초청 적합"; }
-  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품/.test(ind))) { suggestedType="스폰서"; typeReason="대기업 또는 높은 브랜드 파워로 스폰서 적합"; }
+  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품|health/.test(ind))) { suggestedType="스폰서"; typeReason="대기업 또는 높은 브랜드 파워로 스폰서 적합"; }
   return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
 }
 
@@ -577,7 +709,7 @@ function generateEmail(contact, purpose, season, customNote) {
   const nm = contact.name||"";
   const dname = nm.includes("(") ? (isKo||isJp ? nm.split("(")[0].trim() : (nm.match(/\(([^)]+)\)/)||[,""])[1]||nm) : nm;
   const hon = isKo ? (/대표|CEO|회장|Founder|President|Director|General Manager/.test(contact.title||"")?"대표님":"님") : "";
-  const greeting = isKo ? `안녕하세요, ${dname} ${hon},` : isJp ? `${dname} 様\n\nお世話になっております。MEGAZOO 2026 事務局でございます。` : `Dear ${dname},`;
+  const greeting = isKo ? `안녕하세요, ${dname} ${hon},` : isJp ? `${dname} 様\n\nお世話になっております。${ev.name} 事務局でございます。` : `Dear ${dname},`;
   const ko_note = contact.note ? `\n\n💡 특이사항: ${contact.note}가 있어 글로벌 바이어 매칭 세션과 높은 시너지가 예상됩니다.` : "";
   const en_note = contact.note ? `\n\n💡 Note: Given "${contact.note}", we expect strong synergy with our buyer matching sessions.` : "";
   const cn_note = contact.note ? `\n\n备注：「${contact.note}」，相信与我们买家匹配项目能产生很大价值。` : "";
@@ -586,25 +718,25 @@ function generateEmail(contact, purpose, season, customNote) {
   const C = ev.contact, ST = ev.stats, B = ev.booth;
 
   if (purpose==="부스") {
-    if (isJp) return {subject:`【MEGAZOO 2026 ${sL}】${contact.company} 様 ブース出展のご招待`,body:`${greeting}\n\n韓国最大・国際認定ペット産業展 **MEGAZOO 2026 ${sL}** への出展をご招待申し上げます。\n\n📅 開催概要\n• 会期：${s.dates}\n• 会場：${s.venue}、KINTEX（高陽市）\n• 主催：KPFA　|　主管：MESSE ESANG\n• 後援：農林畜産食品部（政府公認・業界唯一）\n\n📊 2025年実績\n• 総来場者：${ST.visitors2025}名（前年比${ST.growthYoY}増）\n• 海外来場者：${ST.overseasVisitors2025}名（${ST.countries2025}ヶ国）— 前年比${ST.overseasGrowth}急増\n• 商談：${ST.matchMeetings}件 / 相談総額：${ST.consultationUSD}\n\n💼 Biz-Matching\n${ST.database}件DB基盤の1:1事前予約商談（購買/OEM/販売代理/輸出入 等）\n\n💡 ブース料金\n• スペースのみ：${B.spaceOnly}　• シェルスキーム：${B.shellScheme}${jp_note}${cm}\n\nご検討よろしくお願い申し上げます。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
-    if (isKo) return {subject:`[MEGAZOO 2026 ${sL}] ${contact.company} 공식 부스 참가 초청`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 활동을 주목하여, 한국 최대 반려동물 산업 전시회 **MEGAZOO 2026 ${sL}**에 공식 부스 참가사로 초청드립니다.\n\n📅 행사 개요\n• 일정: ${s.dates}\n• 장소: ${s.venue}, KINTEX (고양시)\n• 주최: KPFA  |  주관: MESSE ESANG\n• 후원: 농림축산식품부 ★ 정부 공식 후원 (업계 유일)\n\n📊 MEGAZOO 2025 실적\n• 총 방문객: ${ST.visitors2025}명 (전년비 ${ST.growthYoY})\n• 해외 방문객: ${ST.overseasVisitors2025}명 (${ST.countries2025}개국) — 전년비 ${ST.overseasGrowth} 급증\n• 비즈 매칭: ${ST.matchMeetings}건 / 상담액 ${ST.consultationUSD}\n\n💼 Global Biz-Matching\n${ST.database}건 DB 기반 1:1 사전예약 미팅 (구매/OEM·ODM/유통/수출입 등 6가지 유형)\n\n💡 부스 참가 안내\n• Space Only: ${B.spaceOnly} (최소 24㎡)\n• Shell Scheme: ${B.shellScheme} (카펫·벽체·조명·책상·의자 포함)${ko_note}${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
-    if (isCn) return {subject:`[MEGAZOO 2026 ${sL}] 诚邀 ${contact.company} 参展`,body:`${greeting}\n\n诚邀贵公司参加韩国最权威宠物产业展 **MEGAZOO 2026 ${sL}**。\n\n📅 展会概况\n• 日期：${s.dates}\n• 场地：${s.venue}，KINTEX\n• 后援：农林畜产食品部（政府唯一官方赞助）\n\n📊 2025年成绩\n• 参观者：${ST.visitors2025}（同比${ST.growthYoY}）\n• 海外：${ST.overseasVisitors2025}人 / ${ST.countries2025}国，同比+${ST.overseasGrowth}\n• 商务配对：${ST.matchMeetings}场 / ${ST.consultationUSD}${cn_note}${cm}\n\n如有兴趣，欢迎联系。\n\nMEGAZOO 2026 组委会\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[MEGAZOO 2026 ${sL}] Official Booth Invitation — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 organizing team.\n\nWe'd like to invite ${contact.company} to exhibit at **MEGAZOO 2026 ${sL}** — Korea's #1 internationally certified pet trade show, officially sponsored by Korea's Ministry of Agriculture, Food and Rural Affairs.\n\n📅 Show Details\n• Dates: ${s.dates}\n• Venue: ${s.venue}, KINTEX, Korea\n• Host: KPFA  |  Organizer: MESSE ESANG\n\n📊 2025 Performance\n• Total Visitors: ${ST.visitors2025} (${ST.growthYoY} YoY)\n• Overseas: ${ST.overseasVisitors2025} from ${ST.countries2025} countries (${ST.overseasGrowth} surge)\n• Biz-Matching: ${ST.matchMeetings} meetings | ${ST.consultationUSD}${contact.country!=="한국"?`\n• ${flag} Full support for international exhibitors from ${contact.country}`:""}${en_note}${cm}\n\n• Booth: Space Only ${B.spaceOnly} / Shell Scheme ${B.shellScheme}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isJp) return {subject:`【${ev.name} ${sL}】${contact.company} 様 ブース出展のご招待`,body:`${greeting}\n\n韓国最大・国際認定ペット産業展 **${ev.name} ${sL}** への出展をご招待申し上げます。\n\n📅 開催概要\n• 会期：${s.dates}\n• 会場：${s.venue}、KINTEX（高陽市）\n• 主催：KPFA　|　主管：MESSE ESANG\n• 後援：農林畜産食品部（政府公認・業界唯一）\n\n📊 2025年実績\n• 総来場者：${ST.visitors2025}名（前年比${ST.growthYoY}増）\n• 海外来場者：${ST.overseasVisitors2025}名（${ST.countries2025}ヶ国）— 前年比${ST.overseasGrowth}急増\n• 商談：${ST.matchMeetings}件 / 相談総額：${ST.consultationUSD}\n\n💼 Biz-Matching\n${ST.database}件DB基盤の1:1事前予約商談（購買/OEM/販売代理/輸出入 等）\n\n💡 ブース料金\n• スペースのみ：${B.spaceOnly}　• シェルスキーム：${B.shellScheme}${jp_note}${cm}\n\nご検討よろしくお願い申し上げます。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isKo) return {subject:`[${ev.name} ${sL}] ${contact.company} 공식 부스 참가 초청`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 활동을 주목하여, **${ev.name} ${sL}**에 공식 부스 참가사로 초청드립니다.\n\n📅 행사 개요\n• 일정: ${s.dates}\n• 장소: ${s.venue}, KINTEX (고양시)\n• 주최: KPFA  |  주관: MESSE ESANG\n• 후원: 농림축산식품부 ★ 정부 공식 후원 (업계 유일)\n\n📊 MEGAZOO 2025 실적\n• 총 방문객: ${ST.visitors2025}명 (전년비 ${ST.growthYoY})\n• 해외 방문객: ${ST.overseasVisitors2025}명 (${ST.countries2025}개국) — 전년비 ${ST.overseasGrowth} 급증\n• 비즈 매칭: ${ST.matchMeetings}건 / 상담액 ${ST.consultationUSD}\n\n💼 Global Biz-Matching\n${ST.database}건 DB 기반 1:1 사전예약 미팅 (구매/OEM·ODM/유통/수출입 등 6가지 유형)\n\n💡 부스 참가 안내\n• Space Only: ${B.spaceOnly} (최소 24㎡)\n• Shell Scheme: ${B.shellScheme} (카펫·벽체·조명·책상·의자 포함)${ko_note}${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isCn) return {subject:`[${ev.name} ${sL}] 诚邀 ${contact.company} 参展`,body:`${greeting}\n\n诚邀贵公司参加韩国最权威宠物产业展 **${ev.name} ${sL}**。\n\n📅 展会概况\n• 日期：${s.dates}\n• 场地：${s.venue}，KINTEX\n• 后援：农林畜产食品部（政府唯一官方赞助）\n\n📊 2025年成绩\n• 参观者：${ST.visitors2025}（同比${ST.growthYoY}）\n• 海外：${ST.overseasVisitors2025}人 / ${ST.countries2025}国，同比+${ST.overseasGrowth}\n• 商务配对：${ST.matchMeetings}场 / ${ST.consultationUSD}${cn_note}${cm}\n\n如有兴趣，欢迎联系。\n\nMEGAZOO 2026 组委会\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[${ev.name} ${sL}] Official Booth Invitation — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the ${ev.name} organizing team.\n\nWe'd like to invite ${contact.company} to exhibit at **${ev.name} ${sL}** — Korea's #1 internationally certified pet trade show, officially sponsored by Korea's Ministry of Agriculture, Food and Rural Affairs.\n\n📅 Show Details\n• Dates: ${s.dates}\n• Venue: ${s.venue}, KINTEX, Korea\n• Host: KPFA  |  Organizer: MESSE ESANG\n\n📊 2025 Performance\n• Total Visitors: ${ST.visitors2025} (${ST.growthYoY} YoY)\n• Overseas: ${ST.overseasVisitors2025} from ${ST.countries2025} countries (${ST.overseasGrowth} surge)\n• Biz-Matching: ${ST.matchMeetings} meetings | ${ST.consultationUSD}${contact.country!=="한국"?`\n• ${flag} Full support for international exhibitors from ${contact.country}`:""}${en_note}${cm}\n\n• Booth: Space Only ${B.spaceOnly} / Shell Scheme ${B.shellScheme}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
   }
   if (purpose==="바이어") {
-    if (isJp) return {subject:`【MEGAZOO 2026 ${sL}】VIPバイヤー特別招待`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、**MEGAZOO 2026 ${sL}** VIPバイヤーとしてご招待申し上げます。\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP特典\n• 1:1事前予約商談（並ばず希望企業と直接面談）\n• ${ST.exhibitors2025}社カタログ事前閲覧\n• ${ST.database}件DB基盤マッチング\n• 2025実績：${ST.consultationUSD} / ${ST.matchMeetings}件${jp_note}${cm}\n\nご参加のご意向をお知らせください。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    if (isKo) return {subject:`[MEGAZOO 2026 ${sL}] VIP 바이어 초청 — 한국 펫 브랜드 우선 상담`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 ${contact.industry} 전문성을 고려하여 **MEGAZOO 2026 ${sL}** VIP 바이어로 특별 초청드립니다.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP 바이어 혜택\n• 1:1 사전 예약 미팅 (원하는 기업 선택, 대기 없이 바로 상담)\n• ${ST.exhibitors2025}개 참가사 카탈로그 사전 열람\n• ${ST.database}건 DB 기반 맞춤 매칭\n• 2025 실적: ${ST.consultationUSD} / ${ST.matchMeetings}건${ko_note}${cm}\n\n참관 의향을 알려주시면 VIP 초청장을 발송합니다.\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[MEGAZOO 2026 ${sL}] VIP Buyer Invitation — Korea's Premier Pet Trade Show`,body:`${greeting}\n\nI'm writing from MEGAZOO 2026 — Korea's largest, only internationally certified pet trade show.\n\nAs a key decision-maker at ${contact.company}, we'd like to extend a special **VIP Buyer Invitation**.\n\n📅 ${s.dates}  |  ${s.venue}, KINTEX, Korea\n\n🎯 VIP Benefits\n• 1:1 pre-scheduled meetings — choose who you meet, no queuing\n• Early access to ${ST.exhibitors2025} exhibitor catalog\n• Smart matching backed by ${ST.database}-entry database\n• 2025: ${ST.consultationUSD} in consultations across ${ST.matchMeetings} meetings${contact.country!=="한국"?`\n• ${flag} Travel/logistics support for buyers from ${contact.country}`:""}${en_note}${cm}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isJp) return {subject:`【${ev.name} ${sL}】VIPバイヤー特別招待`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、**${ev.name} ${sL}** VIPバイヤーとしてご招待申し上げます。\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP特典\n• 1:1事前予約商談（並ばず希望企業と直接面談）\n• ${ST.exhibitors2025}社カタログ事前閲覧\n• ${ST.database}件DB基盤マッチング\n• 2025実績：${ST.consultationUSD} / ${ST.matchMeetings}件${jp_note}${cm}\n\nご参加のご意向をお知らせください。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    if (isKo) return {subject:`[${ev.name} ${sL}] VIP 바이어 초청 — 한국 펫 브랜드 우선 상담`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 ${contact.industry} 전문성을 고려하여 **${ev.name} ${sL}** VIP 바이어로 특별 초청드립니다.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP 바이어 혜택\n• 1:1 사전 예약 미팅 (원하는 기업 선택, 대기 없이 바로 상담)\n• ${ST.exhibitors2025}개 참가사 카탈로그 사전 열람\n• ${ST.database}건 DB 기반 맞춤 매칭\n• 2025 실적: ${ST.consultationUSD} / ${ST.matchMeetings}건${ko_note}${cm}\n\n참관 의향을 알려주시면 VIP 초청장을 발송합니다.\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[${ev.name} ${sL}] VIP Buyer Invitation — Korea's Premier Pet Trade Show`,body:`${greeting}\n\nI'm writing from the ${ev.name} organizing team.\n\nAs a key decision-maker at ${contact.company}, we'd like to extend a special **VIP Buyer Invitation**.\n\n📅 ${s.dates}  |  ${s.venue}, KINTEX, Korea\n\n🎯 VIP Benefits\n• 1:1 pre-scheduled meetings — choose who you meet, no queuing\n• Early access to ${ST.exhibitors2025} exhibitor catalog\n• Smart matching backed by ${ST.database}-entry database\n• 2025: ${ST.consultationUSD} in consultations across ${ST.matchMeetings} meetings${contact.country!=="한국"?`\n• ${flag} Travel/logistics support for buyers from ${contact.country}`:""}${en_note}${cm}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
   }
   if (purpose==="스폰서") {
-    if (isJp) return {subject:`【MEGAZOO 2026】オフィシャルスポンサーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、MEGAZOO 2026 の **公式スポンサー** としてのご参加をご提案いたします。\n\n🏆 MEGAZOO の権威\n• 2013年以来 韓国最大ペット展 — AKEI唯一国際認定\n• 農林畜産食品部 政府公認後援（業界唯一）\n• 2025年 来場者${ST.visitors2025}名 / ${ST.countries2025}ヶ国\n\n⭐ スポンサー特典\n• 主要エリアへのブランド露出\n• セッションネーミング権 / 単独セミナースポンサー機会\n• ${ST.database}件DB基盤バイヤーマッチング優先配定${cm}\n\nご提案書をお送りできます。30分のお打ち合わせをお願いできますでしょうか。\n\nMEGAZOO 2026 スポンサーシップ事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    if (isKo) return {subject:`[MEGAZOO 2026] 공식 스폰서십 제안 — ${contact.company}`,body:`${greeting}\n\nMEGAZOO 2026 스폰서십 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 성과를 주목하며 공식 스폰서로 모시고자 제안드립니다.\n\n🏆 MEGAZOO 공신력\n• 2013년 이래 한국 최대 펫 전시 — AKEI 국제 공인 유일\n• 농림축산식품부 공식 후원 (업계 유일)\n• 2025년 방문객 ${ST.visitors2025}명 / ${ST.countries2025}개국\n\n⭐ 스폰서십 혜택\n• 전시장 주요 위치 브랜드 노출\n• 세션 네이밍권 / 전문가 세미나 단독 스폰서\n• ${ST.database}건 DB 기반 바이어 우선 매칭${cm}\n\n맞춤형 제안서를 준비해 드릴 수 있습니다. 30분 미팅을 요청드립니다.\n\nMEGAZOO 2026 스폰서십 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[MEGAZOO 2026] Official Sponsorship Proposal — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 Sponsorship Team.\n\nWe believe ${contact.company} would be an outstanding sponsor of Korea's most authoritative pet industry platform.\n\n🏆 Why MEGAZOO?\n• Korea's #1 pet show since 2013 — only AKEI-certified\n• Officially sponsored by Korea's Ministry of Agriculture (industry exclusive)\n• 2025: ${ST.visitors2025} visitors | ${ST.countries2025} countries${cm}\n\n⭐ Sponsorship Benefits\n• Prime brand visibility (entrance, main hall, all materials)\n• Session naming rights / exclusive seminar sponsorship\n• Priority buyer matching (${ST.database}-entry DB, ${ST.matchMeetings} real meetings)\n\nI'd love to share a tailored proposal. Can we find 30 minutes for a call?\n\nBest regards,\nMEGAZOO 2026 Sponsorship Team\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isJp) return {subject:`【${ev.name}】オフィシャルスポンサーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、MEGAZOO 2026 の **公式スポンサー** としてのご参加をご提案いたします。\n\n🏆 ${ev.name} の権威\n• 2013年以来 韓国最大ペット展 — AKEI唯一国際認定\n• 農林畜産食品部 政府公認後援（業界唯一）\n• 2025年 来場者${ST.visitors2025}名 / ${ST.countries2025}ヶ国\n\n⭐ スポンサー特典\n• 主要エリアへのブランド露出\n• セッションネーミング権 / 単独セミナースポンサー機会\n• ${ST.database}件DB基盤バイヤーマッチング優先配定${cm}\n\nご提案書をお送りできます。30分のお打ち合わせをお願いできますでしょうか。\n\n${ev.name} スポンサーシップ事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    if (isKo) return {subject:`[${ev.name}] 공식 스폰서십 제안 — ${contact.company}`,body:`${greeting}\n\n${ev.name} 스폰서십 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 성과를 주목하며 공식 스폰서로 모시고자 제안드립니다.\n\n🏆 MEGAZOO 공신력\n• 2013년 이래 한국 최대 펫 전시 — AKEI 국제 공인 유일\n• 농림축산식품부 공식 후원 (업계 유일)\n• 2025년 방문객 ${ST.visitors2025}명 / ${ST.countries2025}개국\n\n⭐ 스폰서십 혜택\n• 전시장 주요 위치 브랜드 노출\n• 세션 네이밍권 / 전문가 세미나 단독 스폰서\n• ${ST.database}건 DB 기반 바이어 우선 매칭${cm}\n\n맞춤형 제안서를 준비해 드릴 수 있습니다. 30분 미팅을 요청드립니다.\n\n${ev.name} 스폰서십 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+    return {subject:`[${ev.name}] Official Sponsorship Proposal — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 Sponsorship Team.\n\nWe believe ${contact.company} would be an outstanding sponsor of Korea's most authoritative pet industry platform.\n\n🏆 Why ${ev.name}?\n• Korea's #1 pet show since 2013 — only AKEI-certified\n• Officially sponsored by Korea's Ministry of Agriculture (industry exclusive)\n• 2025: ${ST.visitors2025} visitors | ${ST.countries2025} countries${cm}\n\n⭐ Sponsorship Benefits\n• Prime brand visibility (entrance, main hall, all materials)\n• Session naming rights / exclusive seminar sponsorship\n• Priority buyer matching (${ST.database}-entry DB, ${ST.matchMeetings} real meetings)\n\nI'd love to share a tailored proposal. Can we find 30 minutes for a call?\n\nBest regards,\nMEGAZOO 2026 Sponsorship Team\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
   }
   // 미디어
-  if (isJp) return {subject:`【MEGAZOO 2026】公式メディアパートナーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の専門性を評価し、MEGAZOO 2026 **公式メディアパートナー** としてのご協力をご提案いたします。\n\n📰 特典\n• 独占取材・優先インタビュー調整\n• 公式写真・映像素材の提供\n• 公式資料へのロゴ掲載${cm}\n\nMEGAZOO 2026 事務局\n✉️ ${C.email}`};
-  if (isKo) return {subject:`[MEGAZOO 2026] 공식 미디어 파트너 협력 제안 — ${contact.company}`,body:`${greeting}\n\nMEGAZOO 2026 사무국입니다.\n\n${contact.company}의 반려동물 분야 전문성을 평가하여 **공식 미디어 파트너**로 협력을 제안드립니다.\n\n📰 미디어 파트너 혜택\n• 전시회 전·중·후 독점 취재 및 보도자료 우선 제공\n• CEO·바이어 인터뷰 우선 배정\n• 공식 자료·SNS 미디어 파트너 로고 표기${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-  return {subject:`[MEGAZOO 2026] Official Media Partnership — ${contact.company}`,body:`${greeting}\n\nWe'd like to invite ${contact.company} as an **Official Media Partner** for MEGAZOO 2026.\n\n📰 Benefits\n• Exclusive press access pre/during/post show\n• Priority CEO & buyer interview scheduling\n• Official photo/video assets + logo on all materials${cm}\n\nBest regards,\nMEGAZOO 2026 Press Office\n✉️ ${C.email}  |  🌐 ${C.web}`};
+  if (isJp) return {subject:`【${ev.name}】公式メディアパートナーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の専門性を評価し、MEGAZOO 2026 **公式メディアパートナー** としてのご協力をご提案いたします。\n\n📰 特典\n• 独占取材・優先インタビュー調整\n• 公式写真・映像素材の提供\n• 公式資料へのロゴ掲載${cm}\n\nMEGAZOO 2026 事務局\n✉️ ${C.email}`};
+  if (isKo) return {subject:`[${ev.name}] 공식 미디어 파트너 협력 제안 — ${contact.company}`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 반려동물 분야 전문성을 평가하여 **공식 미디어 파트너**로 협력을 제안드립니다.\n\n📰 미디어 파트너 혜택\n• 전시회 전·중·후 독점 취재 및 보도자료 우선 제공\n• CEO·바이어 인터뷰 우선 배정\n• 공식 자료·SNS 미디어 파트너 로고 표기${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
+  return {subject:`[${ev.name}] Official Media Partnership — ${contact.company}`,body:`${greeting}\n\nWe'd like to invite ${contact.company} as an **Official Media Partner** for MEGAZOO 2026.\n\n📰 Benefits\n• Exclusive press access pre/during/post show\n• Priority CEO & buyer interview scheduling\n• Official photo/video assets + logo on all materials${cm}\n\nBest regards,\nMEGAZOO 2026 Press Office\n✉️ ${C.email}  |  🌐 ${C.web}`};
 }
 
 // ── 유틸 ─────────────────────────────────────────────────────────────────
@@ -638,6 +770,24 @@ function init() {
   // 페이지 진입 시 항상 MEGAZOO가 선택된 상태로 시작
   selectEvent('megazoo');
   renderGradeFilterChips();
+}
+
+function selectEvent(key) {
+  state.event = key;
+  state.season = "1";
+  // 칩 active 상태 업데이트
+  document.querySelectorAll('.event-chip').forEach(b => b.classList.remove('active'));
+  const chip = document.getElementById('chip-' + key);
+  if (chip) chip.classList.add('active');
+  // 등급 필터 라벨 업데이트
+  const ev = SHOWS[key] || SHOWS.megazoo;
+  const lbl = document.getElementById('gf-show-label');
+  if (lbl) lbl.textContent = `📊 ${ev.emoji} ${ev.name} 적합도`;
+  // 점수 캐시 초기화 후 재렌더
+  contacts.forEach(c => { c._score = undefined; c._grade = undefined; });
+  renderEventDetailBar();
+  renderGradeFilterChips();
+  renderList();
 }
 
 function setSeason(v) {
