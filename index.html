@@ -40,7 +40,7 @@
   #main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
   /* ── 왼쪽 패널 ── */
-  #left { width: 295px; border-right: 1px solid #E5E7EB; background: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+  #left { width: 500px; border-right: 1px solid #E5E7EB; background: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
   #btn-row { padding: 10px 13px; border-bottom: 1px solid #F3F4F6; display: flex; gap: 6px; }
   .btn-outline { flex: 1; padding: 8px; background: #fff; border: 1.5px solid #E8470A; border-radius: 8px; cursor: pointer; color: #E8470A; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; }
   .btn-solid { flex: 1; padding: 8px; background: linear-gradient(135deg, #E8470A, #F97316); border: none; border-radius: 8px; cursor: pointer; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; }
@@ -195,7 +195,7 @@
   .scoring-btn:hover { color: #E8470A; border-color: #E8470A; }
   .gf-chips { display: flex; flex-direction: column; gap: 5px; }
   .gf-chips-row { display: flex; gap: 5px; }
-  .gf-chip-all { width: 100%; justify-content: center; }
+  .gf-chip-all { flex: 1; justify-content: center; }
   .gf-chip { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer; font-weight: 600; transition: all .12s; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
   .gf-chip:hover { border-color: #9CA3AF; }
   .gf-chip .gf-cnt { font-size: 9.5px; opacity: .75; font-weight: 700; }
@@ -931,8 +931,8 @@ function renderGradeFilterChips() {
   const makeChip = (key, label, cnt, cls, extraClass='') =>
     `<button class="gf-chip${gradeFilter===key?' '+cls:''}${extraClass?' '+extraClass:''}" onclick="setGradeFilter('${key}')">${label} <span class="gf-cnt">${cnt}</span></button>`;
   el.innerHTML = `
-    <div class="gf-chips-row">${makeChip('all','전체',all.length,'active-all','gf-chip-all')}</div>
     <div class="gf-chips-row">
+      ${makeChip('all','전체',all.length,'active-all','gf-chip-all')}
       ${makeChip('high','🔥 높은 적합도',high,'active-high')}
       ${makeChip('mid','⚡ 보통',mid,'active-mid')}
       ${makeChip('low','❌ 낮음',low,'active-low')}
@@ -1137,12 +1137,11 @@ function renderDetail() {
       </div>
     </div>
 
-    ${recommendNote()}
+    ${(()=>{ const r=classifyContact(c); const tc2=TYPE_COLORS[r.suggestedType]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${r.typeReason}</span></div>`; })()}
     <div class="controls-row">
       <div class="purpose-btns">
         <div class="section-label">발송 목적</div>
         <div class="btn-group">${purposeBtns}</div>
-        ${(()=>{ const r=classifyContact(c); const tc2=TYPE_COLORS[r.suggestedType]||TYPE_COLORS["부스"]; return `<div style="margin-top:6px;font-size:11px;color:#6B7280;display:flex;align-items:center;gap:5px"><span style="background:${tc2.bg};color:${tc2.text};border:1px solid ${tc2.border};border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:700">${tc2.label} 추천</span><span>${r.typeReason}</span></div>`; })()}
       </div>
       <div class="season-picker">
         <div class="section-label">시즌</div>
