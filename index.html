@@ -62,11 +62,10 @@
   .star.on  { color:#F59E0B; }
   .star.off { color:#E5E7EB; }
 
-  /* ── 점수 툴팁 ── */
-  .score-wrap { position: relative; display: inline-flex; align-items: center; }
-  .score-wrap:hover .score-tooltip { display: block; }
-  .score-tooltip { display: none; position: absolute; right: 0; bottom: calc(100% + 7px); background: #1A1A1A; border-radius: 10px; padding: 10px 13px; min-width: 210px; z-index: 300; box-shadow: 0 8px 28px rgba(0,0,0,0.4); pointer-events: none; }
-  .score-tooltip::after { content:''; position:absolute; right:10px; top:100%; border:5px solid transparent; border-top-color:#1A1A1A; }
+  /* ── 점수 툴팁 (global fixed) ── */
+  .score-wrap { display: inline-flex; align-items: center; cursor: default; }
+  #global-score-tip { display: none; position: fixed; z-index: 9999; background: #1A1A1A; border-radius: 10px; padding: 10px 13px; min-width: 210px; box-shadow: 0 8px 28px rgba(0,0,0,0.4); pointer-events: none; }
+  #global-score-tip::after { content:''; position:absolute; right:12px; top:100%; border:5px solid transparent; border-top-color:#1A1A1A; }
   .st-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 2.5px 0; font-size: 11px; color: #9CA3AF; }
   .st-label { flex: 1; }
   .st-pts { font-weight: 700; color: #34D399; white-space: nowrap; font-size: 11px; }
@@ -265,6 +264,9 @@
 </style>
 </head>
 <body>
+
+<!-- 점수 툴팁 (전역, fixed) -->
+<div id="global-score-tip"></div>
 
 <!-- ── Tier 1: 제목부 ── -->
 <div id="app-title-bar">
@@ -941,6 +943,32 @@ function recommendNote() {
   return '<div class="recommend-note"><span class="rn-icon">✨</span><span><strong>영업 목적으로 가장 적합한 내용을 추천해 드렸어요!</strong><br>원하시는 목적으로 변경도 가능합니다.</span></div>';
 }
 
+// ── 점수 툴팁 (global fixed) ──────────────────────────────────────────────
+function showScoreTip(el) {
+  const tip = document.getElementById('global-score-tip');
+  if (!tip) return;
+  const bdRaw = el.getAttribute('data-bd');
+  const sc    = el.getAttribute('data-sc');
+  if (!bdRaw) return;
+  let bd;
+  try { bd = JSON.parse(bdRaw); } catch(e) { return; }
+  tip.innerHTML =
+    bd.map(b=>`<div class="st-row"><span class="st-label">${b.label}</span><span class="st-pts${b.pts<0?' neg':''}">${b.pts>0?'+':''}${b.pts}pt</span></div>`).join('') +
+    `<div class="st-divider"></div><div class="st-total"><span>합계</span><span class="st-total-pts">${sc}pt</span></div>`;
+  const rect = el.getBoundingClientRect();
+  tip.style.display = 'block';
+  // 툴팁 너비 측정 후 위치 보정
+  const tw = tip.offsetWidth;
+  let left = rect.right - tw;
+  if (left < 4) left = 4;
+  tip.style.left = left + 'px';
+  tip.style.top  = (rect.top - tip.offsetHeight - 9) + 'px';
+}
+function hideScoreTip() {
+  const tip = document.getElementById('global-score-tip');
+  if (tip) tip.style.display = 'none';
+}
+
 // ── 초기화 ────────────────────────────────────────────────────────────────
 function init() {
   // 국가 필터 옵션
@@ -1041,24 +1069,22 @@ function renderContactItem(c) {
   const active = state.selected && state.selected.id===c.id;
   // _suggestedType 없으면 계산 후 캐싱
   if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; c._breakdown = r.breakdown; }
-  const badge = typeBadgeHtml(c._suggestedType || c.type);
+  // 기관(suggestedType==="")이면 뱃지 숨김, 아니면 추천 타입 표시
+  const badge = (c._suggestedType === "") ? "" : typeBadgeHtml(c._suggestedType !== undefined ? c._suggestedType : c.type);
   const gr = c._grade;
   const sc = c._score;
-  const gradeLabel = {high:'🔥',mid:'⚡',low:'❌'}[gr]||'';
   const dotClass = {high:'high',mid:'mid',low:'low'}[gr]||'';
-  // 점수 산정식 툴팁
-  const tooltipHtml = (c._breakdown && c._breakdown.length)
-    ? `<div class="score-tooltip">
-        ${c._breakdown.map(b=>`<div class="st-row"><span class="st-label">${b.label}</span><span class="st-pts${b.pts<0?' neg':''}">${b.pts>0?'+':''}${b.pts}pt</span></div>`).join('')}
-        <div class="st-divider"></div>
-        <div class="st-total"><span>합계</span><span class="st-total-pts">${sc}pt</span></div>
-      </div>` : '';
+  // breakdown을 data 속성에 JSON으로 저장 → 글로벌 툴팁에서 읽음
+  const bdData = (c._breakdown && c._breakdown.length) ? esc(JSON.stringify(c._breakdown)) : "";
   return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
     <div class="ci-top">
       <div class="ci-name">${c._new?'<span class="new-badge">NEW</span>':''}${esc(FLAGS[c.country]||"🌏")} ${esc(c.name||c.company)}</div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <span class="ci-grade-dot ${dotClass}" title="${{high:'높은 적합도',mid:'보통 적합도',low:'낮은 적합도'}[gr]||''}"></span>
-        <div class="score-wrap"><span class="ci-score-num">${sc}pt</span>${tooltipHtml}</div>
+        <div class="score-wrap" data-bd="${bdData}" data-sc="${sc}"
+          onmouseenter="showScoreTip(this)" onmouseleave="hideScoreTip()">
+          <span class="ci-score-num">${sc}pt</span>
+        </div>
         ${badge}
       </div>
     </div>
