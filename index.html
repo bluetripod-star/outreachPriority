@@ -62,6 +62,19 @@
   .star.on  { color:#F59E0B; }
   .star.off { color:#E5E7EB; }
 
+  /* ── 점수 툴팁 ── */
+  .score-wrap { position: relative; display: inline-flex; align-items: center; }
+  .score-wrap:hover .score-tooltip { display: block; }
+  .score-tooltip { display: none; position: absolute; right: 0; bottom: calc(100% + 7px); background: #1A1A1A; border-radius: 10px; padding: 10px 13px; min-width: 210px; z-index: 300; box-shadow: 0 8px 28px rgba(0,0,0,0.4); pointer-events: none; }
+  .score-tooltip::after { content:''; position:absolute; right:10px; top:100%; border:5px solid transparent; border-top-color:#1A1A1A; }
+  .st-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 2.5px 0; font-size: 11px; color: #9CA3AF; }
+  .st-label { flex: 1; }
+  .st-pts { font-weight: 700; color: #34D399; white-space: nowrap; font-size: 11px; }
+  .st-pts.neg { color: #F87171; }
+  .st-divider { height: 1px; background: #333; margin: 6px 0; }
+  .st-total { display: flex; justify-content: space-between; align-items: center; gap: 14px; font-size: 12px; font-weight: 800; color: #fff; padding: 2px 0; }
+  .st-total-pts { color: #F97316; font-size: 13px; }
+
   #contact-list { flex: 1; overflow-y: auto; min-height: 0; }
   .contact-item { padding: 9px 13px; border-bottom: 1px solid #F9FAFB; cursor: pointer; border-left: 3px solid transparent; transition: background .1s; }
   .contact-item:hover { background: #FFF9F7; }
@@ -124,8 +137,13 @@
   .lang-btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; transition: all .12s; }
   .lang-btn.active { border-color: #4338CA; background: #EEF2FF; color: #4338CA; font-weight: 700; }
   .note-row { margin-bottom: 12px; }
-  .note-row input { width: 100%; padding: 8px 11px; border: 1.5px solid #E5E7EB; border-radius: 7px; font-size: 12.5px; outline: none; color: #1F2937; }
+  .note-row-inner { display: flex; gap: 6px; align-items: center; }
+  .note-row input { flex: 1; padding: 8px 11px; border: 1.5px solid #E5E7EB; border-radius: 7px; font-size: 12.5px; outline: none; color: #1F2937; }
   .note-row input:focus { border-color: #E8470A; }
+  .note-row input.has-value { border-color: #F97316; background: #FFFBEB; }
+  .btn-apply-note { padding: 8px 14px; background: #1A1A1A; color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .btn-apply-note:hover { background: #E8470A; }
+  .btn-apply-note.applied { background: #059669; }
 
   /* 이메일 출력 */
   .email-box { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 9px; overflow: hidden; }
@@ -280,7 +298,7 @@
       <input type="text" id="search-input" placeholder="🔍  이름 · 회사 · 업종" oninput="renderList()">
       <div class="filter-row">
         <select id="filter-type" onchange="renderList()">
-          <option>전체</option><option>부스</option><option>바이어</option><option>스폰서</option><option>미디어</option>
+          <option>전체</option><option>부스</option><option>바이어</option><option>미디어</option>
         </select>
         <select id="filter-country" onchange="renderList()"></select>
       </div>
@@ -705,33 +723,42 @@ let CONTACT_WEIGHTS = { both:25, emailOnly:15, phoneOnly:15 };
 const DEFAULT_CONTACT_WEIGHTS = { ...CONTACT_WEIGHTS };
 
 function classifyContact(f) {
-  let score = 0; const reasons = [];
+  let score = 0; const reasons = []; const breakdown = [];
   const t = ((f.title||"")+" "+(f.title_en||"")).toLowerCase();
   const ind = (f.industry||"").toLowerCase();
   const co = ((f.company||"")+" "+(f.company_en||"")).toLowerCase();
   // 직함
-  if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { score+=TITLE_WEIGHTS.ceo;        reasons.push("의사결정권자"); }
-  else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t))   { score+=TITLE_WEIGHTS.director;   reasons.push("중간관리자"); }
-  else if (/담당|coordinator|executive|specialist|lecturer|professor/.test(t)){ score+=TITLE_WEIGHTS.specialist; reasons.push("실무 담당자"); }
-  else { score+=TITLE_WEIGHTS.other; }
+  let titlePts = 0, titleLabel = "";
+  if (/대표|ceo|사장|회장|president|founder|owner|representative/.test(t)) { titlePts=TITLE_WEIGHTS.ceo;        titleLabel="직함 — 대표/CEO";     reasons.push("의사결정권자"); }
+  else if (/이사|director|manager|본부장|부장|팀장|head|officer/.test(t))   { titlePts=TITLE_WEIGHTS.director;   titleLabel="직함 — 이사/Manager"; reasons.push("중간관리자"); }
+  else if (/담당|coordinator|executive|specialist|lecturer|professor/.test(t)){ titlePts=TITLE_WEIGHTS.specialist; titleLabel="직함 — 담당/Specialist"; reasons.push("실무 담당자"); }
+  else { titlePts=TITLE_WEIGHTS.other; titleLabel="직함 — 기타"; }
+  score += titlePts; breakdown.push({label: titleLabel, pts: titlePts});
   // 업종
   const w = SHOW_WEIGHTS[state.event] || SHOW_WEIGHTS.megazoo;
-  if (/반려동물|펫|pet/.test(ind))                                  { score+=w.pet;         reasons.push("핵심 타겟 업종"); }
-  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { score+=w.trade;  reasons.push("유통/무역 업종"); }
-  else if (/의료|헬스|health|pharma|수의|bio|바이오/.test(ind))       { score+=w.health;      reasons.push("헬스케어 관련"); }
-  else if (/화장품|코스메틱|cosmet|beauty|미용|패션/.test(ind))        { score+=w.beauty;      reasons.push("뷰티/코스메틱"); }
-  else if (/it|기술|tech|통신|robot|로봇|ai|digital/.test(ind))       { score+=w.it;          reasons.push("IT/기술 업종"); }
-  else if (/미디어|언론|media|광고|방송/.test(ind))                    { score+=w.media;       reasons.push("미디어 업종"); }
-  else if (/식품|food|건강|영양|농업|축산|farm/.test(ind))              { score+=w.food;        reasons.push("식품/농업 관련"); }
-  else if (/교육|연구|research|university/.test(ind))                 { score+=w.edu;         reasons.push("교육/연구"); }
-  else if (/제조|manufact|건설|construction/.test(ind))               { score+=w.mfg;         reasons.push("제조/건설업"); }
-  else if (/캠핑|아웃도어|camping|outdoor|등산|트레킹|hiking/.test(ind)||/캠핑|아웃도어|camping|outdoor/.test(co)) { score+=(w.camping||0); reasons.push("캠핑/아웃도어"); }
-  else if (/전시|이벤트|expo|fair/.test(ind))                          { score+=12;            reasons.push("전시/이벤트"); }
-  else { score+=w.other; reasons.push("관련도 낮은 업종"); }
+  let indPts = 0, indLabel = "";
+  if (/반려동물|펫|pet/.test(ind))                                  { indPts=w.pet;          indLabel="업종 — 반려동물·펫";    reasons.push("핵심 타겟 업종"); }
+  else if (/유통|무역|distribution|trade|import|export|wholesale/.test(ind)) { indPts=w.trade; indLabel="업종 — 유통·무역";    reasons.push("유통/무역 업종"); }
+  else if (/의료|헬스|health|pharma|수의|bio|바이오/.test(ind))       { indPts=w.health;       indLabel="업종 — 헬스케어";       reasons.push("헬스케어 관련"); }
+  else if (/화장품|코스메틱|cosmet|beauty|미용|패션/.test(ind))        { indPts=w.beauty;       indLabel="업종 — 뷰티·코스메틱";  reasons.push("뷰티/코스메틱"); }
+  else if (/it|기술|tech|통신|robot|로봇|ai|digital/.test(ind))       { indPts=w.it;           indLabel="업종 — IT·기술";        reasons.push("IT/기술 업종"); }
+  else if (/미디어|언론|media|광고|방송/.test(ind))                    { indPts=w.media;        indLabel="업종 — 미디어·언론";    reasons.push("미디어 업종"); }
+  else if (/식품|food|건강|영양|농업|축산|farm/.test(ind))              { indPts=w.food;         indLabel="업종 — 식품·농업";      reasons.push("식품/농업 관련"); }
+  else if (/교육|연구|research|university/.test(ind))                 { indPts=w.edu;          indLabel="업종 — 교육·연구";      reasons.push("교육/연구"); }
+  else if (/제조|manufact|건설|construction/.test(ind))               { indPts=w.mfg;          indLabel="업종 — 제조·건설";      reasons.push("제조/건설업"); }
+  else if (/캠핑|아웃도어|camping|outdoor|등산|트레킹|hiking/.test(ind)||/캠핑|아웃도어|camping|outdoor/.test(co)) { indPts=(w.camping||0); indLabel="업종 — 캠핑·아웃도어"; reasons.push("캠핑/아웃도어"); }
+  else if (/전시|이벤트|expo|fair/.test(ind))                          { indPts=12;             indLabel="업종 — 전시·이벤트";    reasons.push("전시/이벤트"); }
+  else { indPts=w.other; indLabel="업종 — 기타"; reasons.push("관련도 낮은 업종"); }
+  score += indPts; breakdown.push({label: indLabel, pts: indPts});
   // 연락처
-  if (f.email && f.phone) { score+=CONTACT_WEIGHTS.both;      reasons.push("이메일+전화 보유"); }
-  else if (f.email)        { score+=CONTACT_WEIGHTS.emailOnly; reasons.push("이메일 보유"); }
-  else if (f.phone)        { score+=CONTACT_WEIGHTS.phoneOnly; reasons.push("전화번호 보유"); }
+  let contPts = 0, contLabel = "";
+  if (f.email && f.phone) { contPts=CONTACT_WEIGHTS.both;      contLabel="연락처 — 이메일+전화"; reasons.push("이메일+전화 보유"); }
+  else if (f.email)        { contPts=CONTACT_WEIGHTS.emailOnly; contLabel="연락처 — 이메일만";    reasons.push("이메일 보유"); }
+  else if (f.phone)        { contPts=CONTACT_WEIGHTS.phoneOnly; contLabel="연락처 — 전화만";      reasons.push("전화번호 보유"); }
+  if (contPts) { score += contPts; breakdown.push({label: contLabel, pts: contPts}); }
+  // 100pt 상한
+  const rawScore = score;
+  if (rawScore > 100) breakdown.push({label: "100pt 상한 적용", pts: -(rawScore - 100)});
   const grade = score>=70?"high":score>=40?"mid":"low";
   let suggestedType="부스", typeReason="제품/서비스 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업";
 
@@ -771,7 +798,7 @@ function classifyContact(f) {
     // 그 외: 기본 문구 유지
   }
 
-  return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
+  return { score:Math.min(score,100), grade, reasons, breakdown, suggestedType, typeReason };
 }
 
 // ── 이메일 생성 ───────────────────────────────────────────────────────────
@@ -788,33 +815,109 @@ function generateEmail(contact, purpose, season, customNote) {
   const dname = nm.includes("(") ? (isKo||isJp ? nm.split("(")[0].trim() : (nm.match(/\(([^)]+)\)/)||[,""])[1]||nm) : nm;
   const hon = isKo ? (/대표|CEO|회장|Founder|President|Director|General Manager/.test(contact.title||"")?"대표님":"님") : "";
   const greeting = isKo ? `안녕하세요, ${dname} ${hon},` : isJp ? `${dname} 様\n\nお世話になっております。${ev.name} 事務局でございます。` : `Dear ${dname},`;
-  const ko_note = contact.note ? `\n\n💡 특이사항: ${contact.note}가 있어 글로벌 바이어 매칭 세션과 높은 시너지가 예상됩니다.` : "";
-  const en_note = contact.note ? `\n\n💡 Note: Given "${contact.note}", we expect strong synergy with our buyer matching sessions.` : "";
+  const ko_note = contact.note ? `\n\n💡 특이사항: ${contact.note}가 있어 바이어 매칭 세션과 높은 시너지가 예상됩니다.` : "";
+  const en_note = contact.note ? `\n\n💡 Note: Given "${contact.note}", we see strong potential for our biz-matching sessions.` : "";
   const cn_note = contact.note ? `\n\n备注：「${contact.note}」，相信与我们买家匹配项目能产生很大价值。` : "";
-  const jp_note = contact.note ? `\n\n※「${contact.note}」を踏まえ、グローバルバイヤーマッチングでのシナジーが期待できます。` : "";
+  const jp_note = contact.note ? `\n\n※「${contact.note}」を踏まえ、バイヤーマッチングでのシナジーが期待できます。` : "";
   const cm = customNote ? (isKo?`\n\n📝 메모: ${customNote}`:isJp?`\n\n📝 メモ：${customNote}`:isCn?`\n\n📝 备注：${customNote}`:`\n\n📝 Note: ${customNote}`) : "";
   const C = ev.contact, ST = ev.stats, B = ev.booth;
 
+  // ── 헬퍼 ──────────────────────────────────────────────────────────────
+  // "—" 또는 빈 값이면 false
+  const hasV = v => v && v !== "—";
+
+  // 업종 멘트 — 기타이면 생략
+  const isGenericInd = !contact.industry || contact.industry === "기타";
+  const indKo = isGenericInd ? "" : `${contact.industry} 분야 `;
+  const indJp = isGenericInd ? "" : `${contact.industry} 分野でのご活躍に注目し、`;
+  const indEn = isGenericInd ? "" : `your work in the ${contact.industry} space `;
+
+  // 실적 블록 — 값이 있는 항목만 표시
+  const statsLinesKo = [
+    hasV(ST.visitors2025) && `• 총 방문객: ${ST.visitors2025}명${hasV(ST.growthYoY)?` (전년비 ${ST.growthYoY})`:""}`,
+    hasV(ST.overseasVisitors2025) && `• 해외 방문객: ${ST.overseasVisitors2025}명${hasV(ST.countries2025)?` (${ST.countries2025}개국)`:""}${hasV(ST.overseasGrowth)?` — 전년비 ${ST.overseasGrowth} 급증`:""}`,
+    hasV(ST.matchMeetings) && `• 비즈 매칭: ${ST.matchMeetings}건${hasV(ST.consultationUSD)?` / 상담액 ${ST.consultationUSD}`:""}`,
+  ].filter(Boolean);
+  const statsBlockKo = statsLinesKo.length ? `\n\n📊 ${ev.name} 실적\n${statsLinesKo.join("\n")}` : "";
+
+  const statsLinesJp = [
+    hasV(ST.visitors2025) && `• 総来場者：${ST.visitors2025}名${hasV(ST.growthYoY)?`（前年比${ST.growthYoY}増）`:""}`,
+    hasV(ST.overseasVisitors2025) && `• 海外来場者：${ST.overseasVisitors2025}名${hasV(ST.countries2025)?`（${ST.countries2025}ヶ国）`:""}${hasV(ST.overseasGrowth)?` — 前年比${ST.overseasGrowth}急増`:""}`,
+    hasV(ST.matchMeetings) && `• 商談：${ST.matchMeetings}件${hasV(ST.consultationUSD)?` / 相談総額：${ST.consultationUSD}`:""}`,
+  ].filter(Boolean);
+  const statsBlockJp = statsLinesJp.length ? `\n\n📊 ${ev.name} 実績\n${statsLinesJp.join("\n")}` : "";
+
+  const statsLinesEn = [
+    hasV(ST.visitors2025) && `• Total Visitors: ${ST.visitors2025}${hasV(ST.growthYoY)?` (${ST.growthYoY} YoY)`:""}`,
+    hasV(ST.overseasVisitors2025) && `• Overseas: ${ST.overseasVisitors2025} from ${hasV(ST.countries2025)?ST.countries2025+" countries":"multiple countries"}${hasV(ST.overseasGrowth)?` (${ST.overseasGrowth} surge)`:""}`,
+    hasV(ST.matchMeetings) && `• Biz-Matching: ${ST.matchMeetings} meetings${hasV(ST.consultationUSD)?` | ${ST.consultationUSD}`:""}`,
+  ].filter(Boolean);
+  const statsBlockEn = statsLinesEn.length ? `\n\n📊 ${ev.name} Performance\n${statsLinesEn.join("\n")}` : "";
+
+  const statsLinesCn = [
+    hasV(ST.visitors2025) && `• 参观者：${ST.visitors2025}${hasV(ST.growthYoY)?`（同比${ST.growthYoY}）`:""}`,
+    hasV(ST.overseasVisitors2025) && `• 海外：${ST.overseasVisitors2025}人${hasV(ST.countries2025)?` / ${ST.countries2025}国`:""}${hasV(ST.overseasGrowth)?`，同比+${ST.overseasGrowth}`:""}`,
+    hasV(ST.matchMeetings) && `• 商务配对：${ST.matchMeetings}场${hasV(ST.consultationUSD)?` / ${ST.consultationUSD}`:""}`,
+  ].filter(Boolean);
+  const statsBlockCn = statsLinesCn.length ? `\n\n📊 ${ev.name} 成绩\n${statsLinesCn.join("\n")}` : "";
+
+  // 비즈매칭 DB 블록 (DB 수치 있을 때만)
+  const bizKo = hasV(ST.database) ? `\n\n💼 Global Biz-Matching\n${ST.database}건 DB 기반 1:1 사전예약 미팅 (구매/OEM·ODM/유통/수출입 등)` : "";
+  const bizJp = hasV(ST.database) ? `\n\n💼 Biz-Matching\n${ST.database}件DB基盤の1:1事前予約商談（購買/OEM/販売代理/輸出入 等）` : "";
+  const bizEn = hasV(ST.database) ? `\n\n💼 Biz-Matching\n1:1 pre-scheduled meetings powered by our ${ST.database}-entry buyer database` : "";
+
+  // 서명 — 전시명 기반으로 통일
+  const sigKo = `${ev.name} 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`;
+  const sigJp = `${ev.name} 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`;
+  const sigEn = `${ev.name} Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`;
+  const sigCn = `${ev.name} 组委会\n📞 ${C.tel}  |  ✉️ ${C.email}`;
+
+  // ── 이메일 템플릿 ─────────────────────────────────────────────────────
   if (purpose==="부스") {
-    if (isJp) return {subject:`【${ev.name} ${sL}】${contact.company} 様 ブース出展のご招待`,body:`${greeting}\n\n韓国最大・国際認定ペット産業展 **${ev.name} ${sL}** への出展をご招待申し上げます。\n\n📅 開催概要\n• 会期：${s.dates}\n• 会場：${s.venue}、KINTEX（高陽市）\n• 主催：KPFA　|　主管：MESSE ESANG\n• 後援：農林畜産食品部（政府公認・業界唯一）\n\n📊 2025年実績\n• 総来場者：${ST.visitors2025}名（前年比${ST.growthYoY}増）\n• 海外来場者：${ST.overseasVisitors2025}名（${ST.countries2025}ヶ国）— 前年比${ST.overseasGrowth}急増\n• 商談：${ST.matchMeetings}件 / 相談総額：${ST.consultationUSD}\n\n💼 Biz-Matching\n${ST.database}件DB基盤の1:1事前予約商談（購買/OEM/販売代理/輸出入 等）\n\n💡 ブース料金\n• スペースのみ：${B.spaceOnly}　• シェルスキーム：${B.shellScheme}${jp_note}${cm}\n\nご検討よろしくお願い申し上げます。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
-    if (isKo) return {subject:`[${ev.name} ${sL}] ${contact.company} 공식 부스 참가 초청`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 활동을 주목하여, **${ev.name} ${sL}**에 공식 부스 참가사로 초청드립니다.\n\n📅 행사 개요\n• 일정: ${s.dates}\n• 장소: ${s.venue}, KINTEX (고양시)\n• 주최: KPFA  |  주관: MESSE ESANG\n• 후원: 농림축산식품부 ★ 정부 공식 후원 (업계 유일)\n\n📊 MEGAZOO 2025 실적\n• 총 방문객: ${ST.visitors2025}명 (전년비 ${ST.growthYoY})\n• 해외 방문객: ${ST.overseasVisitors2025}명 (${ST.countries2025}개국) — 전년비 ${ST.overseasGrowth} 급증\n• 비즈 매칭: ${ST.matchMeetings}건 / 상담액 ${ST.consultationUSD}\n\n💼 Global Biz-Matching\n${ST.database}건 DB 기반 1:1 사전예약 미팅 (구매/OEM·ODM/유통/수출입 등 6가지 유형)\n\n💡 부스 참가 안내\n• Space Only: ${B.spaceOnly} (최소 24㎡)\n• Shell Scheme: ${B.shellScheme} (카펫·벽체·조명·책상·의자 포함)${ko_note}${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
-    if (isCn) return {subject:`[${ev.name} ${sL}] 诚邀 ${contact.company} 参展`,body:`${greeting}\n\n诚邀贵公司参加韩国最权威宠物产业展 **${ev.name} ${sL}**。\n\n📅 展会概况\n• 日期：${s.dates}\n• 场地：${s.venue}，KINTEX\n• 后援：农林畜产食品部（政府唯一官方赞助）\n\n📊 2025年成绩\n• 参观者：${ST.visitors2025}（同比${ST.growthYoY}）\n• 海外：${ST.overseasVisitors2025}人 / ${ST.countries2025}国，同比+${ST.overseasGrowth}\n• 商务配对：${ST.matchMeetings}场 / ${ST.consultationUSD}${cn_note}${cm}\n\n如有兴趣，欢迎联系。\n\nMEGAZOO 2026 组委会\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[${ev.name} ${sL}] Official Booth Invitation — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the ${ev.name} organizing team.\n\nWe'd like to invite ${contact.company} to exhibit at **${ev.name} ${sL}** — Korea's #1 internationally certified pet trade show, officially sponsored by Korea's Ministry of Agriculture, Food and Rural Affairs.\n\n📅 Show Details\n• Dates: ${s.dates}\n• Venue: ${s.venue}, KINTEX, Korea\n• Host: KPFA  |  Organizer: MESSE ESANG\n\n📊 2025 Performance\n• Total Visitors: ${ST.visitors2025} (${ST.growthYoY} YoY)\n• Overseas: ${ST.overseasVisitors2025} from ${ST.countries2025} countries (${ST.overseasGrowth} surge)\n• Biz-Matching: ${ST.matchMeetings} meetings | ${ST.consultationUSD}${contact.country!=="한국"?`\n• ${flag} Full support for international exhibitors from ${contact.country}`:""}${en_note}${cm}\n\n• Booth: Space Only ${B.spaceOnly} / Shell Scheme ${B.shellScheme}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isJp) return {
+      subject:`【${ev.name} ${sL}】${contact.company} 様 ブース出展のご案内`,
+      body:`${greeting}\n\n${indJp}**${ev.name} ${sL}** へのブース出展参加をご提案申し上げます。\n\n📅 開催概要\n• 会期：${s.dates}\n• 会場：${s.venue}\n• 主催：KPFA　|　主管：MESSE ESANG${statsBlockJp}${bizJp}\n\n💡 ブース出展費用\n• スペースのみ：${B.spaceOnly}　• シェルスキーム：${B.shellScheme}${jp_note}${cm}\n\nご検討よろしくお願い申し上げます。\n\n${sigJp}`
+    };
+    if (isKo) return {
+      subject:`[${ev.name} ${sL}] ${contact.company} 부스 참가 제안`,
+      body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${indKo ? `${contact.company}의 ${indKo}주목하여, ` : ""}**${ev.name} ${sL}** 부스 참가를 제안드립니다.\n\n📅 행사 개요\n• 일정: ${s.dates}\n• 장소: ${s.venue}\n• 주최: KPFA  |  주관: MESSE ESANG${statsBlockKo}${bizKo}\n\n💡 부스 참가 비용 안내\n• Space Only: ${B.spaceOnly}\n• Shell Scheme: ${B.shellScheme}${ko_note}${cm}\n\n${sigKo}`
+    };
+    if (isCn) return {
+      subject:`[${ev.name} ${sL}] 诚邀 ${contact.company} 洽谈参展事宜`,
+      body:`${greeting}\n\n诚邀贵公司洽谈参加 **${ev.name} ${sL}** 的展览事宜。\n\n📅 展会概况\n• 日期：${s.dates}\n• 场地：${s.venue}${statsBlockCn}\n\n💡 参展费用\n• Space Only：${B.spaceOnly}\n• Shell Scheme：${B.shellScheme}${cn_note}${cm}\n\n如有兴趣，欢迎联系。\n\n${sigCn}`
+    };
+    return {
+      subject:`[${ev.name} ${sL}] Booth Participation Proposal — ${contact.company}`,
+      body:`${greeting}\n\nI'm writing from the ${ev.name} organizing team.\n\nWe'd like to propose booth participation at **${ev.name} ${sL}** for ${contact.company}${indEn ? ` — we've been following ${indEn}and believe this would be a great fit` : ""}.\n\n📅 Show Details\n• Dates: ${s.dates}\n• Venue: ${s.venue}${statsBlockEn}${bizEn}${contact.country!=="한국"?`\n\n🌍 Full support available for international exhibitors from ${contact.country}.`:""}${en_note}${cm}\n\n💡 Booth Fees\n• Space Only: ${B.spaceOnly}\n• Shell Scheme: ${B.shellScheme}\n\nBest regards,\n${sigEn}`
+    };
   }
   if (purpose==="바이어") {
-    if (isJp) return {subject:`【${ev.name} ${sL}】VIPバイヤー特別招待`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、**${ev.name} ${sL}** VIPバイヤーとしてご招待申し上げます。\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP特典\n• 1:1事前予約商談（並ばず希望企業と直接面談）\n• ${ST.exhibitors2025}社カタログ事前閲覧\n• ${ST.database}件DB基盤マッチング\n• 2025実績：${ST.consultationUSD} / ${ST.matchMeetings}件${jp_note}${cm}\n\nご参加のご意向をお知らせください。\n\nMEGAZOO 2026 事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    if (isKo) return {subject:`[${ev.name} ${sL}] VIP 바이어 초청 — 한국 펫 브랜드 우선 상담`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 ${contact.industry} 전문성을 고려하여 **${ev.name} ${sL}** VIP 바이어로 특별 초청드립니다.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP 바이어 혜택\n• 1:1 사전 예약 미팅 (원하는 기업 선택, 대기 없이 바로 상담)\n• ${ST.exhibitors2025}개 참가사 카탈로그 사전 열람\n• ${ST.database}건 DB 기반 맞춤 매칭\n• 2025 실적: ${ST.consultationUSD} / ${ST.matchMeetings}건${ko_note}${cm}\n\n참관 의향을 알려주시면 VIP 초청장을 발송합니다.\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[${ev.name} ${sL}] VIP Buyer Invitation — Korea's Premier Pet Trade Show`,body:`${greeting}\n\nI'm writing from the ${ev.name} organizing team.\n\nAs a key decision-maker at ${contact.company}, we'd like to extend a special **VIP Buyer Invitation**.\n\n📅 ${s.dates}  |  ${s.venue}, KINTEX, Korea\n\n🎯 VIP Benefits\n• 1:1 pre-scheduled meetings — choose who you meet, no queuing\n• Early access to ${ST.exhibitors2025} exhibitor catalog\n• Smart matching backed by ${ST.database}-entry database\n• 2025: ${ST.consultationUSD} in consultations across ${ST.matchMeetings} meetings${contact.country!=="한국"?`\n• ${flag} Travel/logistics support for buyers from ${contact.country}`:""}${en_note}${cm}\n\nBest regards,\nMEGAZOO 2026 Organizing Committee\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
-  }
-  if (purpose==="스폰서") {
-    if (isJp) return {subject:`【${ev.name}】オフィシャルスポンサーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の ${contact.industry} 分野でのご活躍に注目し、MEGAZOO 2026 の **公式スポンサー** としてのご参加をご提案いたします。\n\n🏆 ${ev.name} の権威\n• 2013年以来 韓国最大ペット展 — AKEI唯一国際認定\n• 農林畜産食品部 政府公認後援（業界唯一）\n• 2025年 来場者${ST.visitors2025}名 / ${ST.countries2025}ヶ国\n\n⭐ スポンサー特典\n• 主要エリアへのブランド露出\n• セッションネーミング権 / 単独セミナースポンサー機会\n• ${ST.database}件DB基盤バイヤーマッチング優先配定${cm}\n\nご提案書をお送りできます。30分のお打ち合わせをお願いできますでしょうか。\n\n${ev.name} スポンサーシップ事務局\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    if (isKo) return {subject:`[${ev.name}] 공식 스폰서십 제안 — ${contact.company}`,body:`${greeting}\n\n${ev.name} 스폰서십 사무국입니다.\n\n${contact.company}의 ${contact.industry} 분야 성과를 주목하며 공식 스폰서로 모시고자 제안드립니다.\n\n🏆 MEGAZOO 공신력\n• 2013년 이래 한국 최대 펫 전시 — AKEI 국제 공인 유일\n• 농림축산식품부 공식 후원 (업계 유일)\n• 2025년 방문객 ${ST.visitors2025}명 / ${ST.countries2025}개국\n\n⭐ 스폰서십 혜택\n• 전시장 주요 위치 브랜드 노출\n• 세션 네이밍권 / 전문가 세미나 단독 스폰서\n• ${ST.database}건 DB 기반 바이어 우선 매칭${cm}\n\n맞춤형 제안서를 준비해 드릴 수 있습니다. 30분 미팅을 요청드립니다.\n\n${ev.name} 스폰서십 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-    return {subject:`[${ev.name}] Official Sponsorship Proposal — ${contact.company}`,body:`${greeting}\n\nI'm reaching out from the MEGAZOO 2026 Sponsorship Team.\n\nWe believe ${contact.company} would be an outstanding sponsor of Korea's most authoritative pet industry platform.\n\n🏆 Why ${ev.name}?\n• Korea's #1 pet show since 2013 — only AKEI-certified\n• Officially sponsored by Korea's Ministry of Agriculture (industry exclusive)\n• 2025: ${ST.visitors2025} visitors | ${ST.countries2025} countries${cm}\n\n⭐ Sponsorship Benefits\n• Prime brand visibility (entrance, main hall, all materials)\n• Session naming rights / exclusive seminar sponsorship\n• Priority buyer matching (${ST.database}-entry DB, ${ST.matchMeetings} real meetings)\n\nI'd love to share a tailored proposal. Can we find 30 minutes for a call?\n\nBest regards,\nMEGAZOO 2026 Sponsorship Team\n📞 ${C.tel}  |  ✉️ ${C.email}  |  🌐 ${C.web}`};
+    if (isJp) return {
+      subject:`【${ev.name} ${sL}】VIPバイヤーご招待`,
+      body:`${greeting}\n\n${indJp || ""}**${ev.name} ${sL}** VIPバイヤーとしてご招待申し上げます。\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP特典\n• 1:1事前予約商談（並ばず希望企業と直接面談）${hasV(ST.exhibitors2025)?`\n• ${ST.exhibitors2025}社カタログ事前閲覧`:""}${hasV(ST.database)?`\n• ${ST.database}件DB基盤マッチング`:""}${hasV(ST.matchMeetings)&&hasV(ST.consultationUSD)?`\n• 実績：${ST.consultationUSD} / ${ST.matchMeetings}件`:""}${jp_note}${cm}\n\nご参加のご意向をお知らせください。\n\n${sigJp}`
+    };
+    if (isKo) return {
+      subject:`[${ev.name} ${sL}] VIP 바이어 초청`,
+      body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${indKo ? `${contact.company}의 ${indKo}전문성을 고려하여,` : `${contact.company}께`} **${ev.name} ${sL}** VIP 바이어로 특별 초청드립니다.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP 바이어 혜택\n• 1:1 사전 예약 미팅 (원하는 기업 선택, 대기 없이 바로 상담)${hasV(ST.exhibitors2025)?`\n• ${ST.exhibitors2025}개 참가사 카탈로그 사전 열람`:""}${hasV(ST.database)?`\n• ${ST.database}건 DB 기반 맞춤 매칭`:""}${hasV(ST.matchMeetings)?`\n• 실적: ${hasV(ST.consultationUSD)?ST.consultationUSD+" / ":""}${ST.matchMeetings}건`:""}${ko_note}${cm}\n\n참관 의향을 알려주시면 초청장을 발송합니다.\n\n${sigKo}`
+    };
+    return {
+      subject:`[${ev.name} ${sL}] VIP Buyer Invitation`,
+      body:`${greeting}\n\nI'm writing from the ${ev.name} organizing team.\n\nWe'd like to extend a special **VIP Buyer Invitation** to ${contact.company}${indEn ? `, given ${indEn}` : ""}.\n\n📅 ${s.dates}  |  ${s.venue}\n\n🎯 VIP Benefits\n• 1:1 pre-scheduled meetings — choose who you meet, no queuing${hasV(ST.exhibitors2025)?`\n• Early access to ${ST.exhibitors2025} exhibitor catalog`:""}${hasV(ST.database)?`\n• Smart matching backed by ${ST.database}-entry database`:""}${hasV(ST.matchMeetings)?`\n• ${hasV(ST.consultationUSD)?ST.consultationUSD+" in consultations across ":""}${ST.matchMeetings} meetings`:""}${contact.country!=="한국"?`\n• ${flag} Travel/logistics support for buyers from ${contact.country}`:""}${en_note}${cm}\n\nBest regards,\n${sigEn}`
+    };
   }
   // 미디어
-  if (isJp) return {subject:`【${ev.name}】公式メディアパートナーシップのご提案 — ${contact.company} 様`,body:`${greeting}\n\n${contact.company} 様の専門性を評価し、MEGAZOO 2026 **公式メディアパートナー** としてのご協力をご提案いたします。\n\n📰 特典\n• 独占取材・優先インタビュー調整\n• 公式写真・映像素材の提供\n• 公式資料へのロゴ掲載${cm}\n\nMEGAZOO 2026 事務局\n✉️ ${C.email}`};
-  if (isKo) return {subject:`[${ev.name}] 공식 미디어 파트너 협력 제안 — ${contact.company}`,body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 반려동물 분야 전문성을 평가하여 **공식 미디어 파트너**로 협력을 제안드립니다.\n\n📰 미디어 파트너 혜택\n• 전시회 전·중·후 독점 취재 및 보도자료 우선 제공\n• CEO·바이어 인터뷰 우선 배정\n• 공식 자료·SNS 미디어 파트너 로고 표기${cm}\n\nMEGAZOO 2026 사무국\n📞 ${C.tel}  |  ✉️ ${C.email}`};
-  return {subject:`[${ev.name}] Official Media Partnership — ${contact.company}`,body:`${greeting}\n\nWe'd like to invite ${contact.company} as an **Official Media Partner** for MEGAZOO 2026.\n\n📰 Benefits\n• Exclusive press access pre/during/post show\n• Priority CEO & buyer interview scheduling\n• Official photo/video assets + logo on all materials${cm}\n\nBest regards,\nMEGAZOO 2026 Press Office\n✉️ ${C.email}  |  🌐 ${C.web}`};
+  if (isJp) return {
+    subject:`【${ev.name}】公式メディアパートナーシップのご提案 — ${contact.company} 様`,
+    body:`${greeting}\n\n${contact.company} 様の専門性を評価し、**${ev.name}** 公式メディアパートナーとしてのご協力をご提案いたします。\n\n📰 メディアパートナー特典\n• 独占取材・優先インタビュー調整\n• 公式写真・映像素材の提供\n• 公式資料へのロゴ掲載${cm}\n\n${sigJp}`
+  };
+  if (isKo) return {
+    subject:`[${ev.name}] 공식 미디어 파트너 협력 제안 — ${contact.company}`,
+    body:`${greeting}\n\n${ev.name} 사무국입니다.\n\n${contact.company}의 전문성을 높이 평가하여 **${ev.name} 공식 미디어 파트너**로 협력을 제안드립니다.\n\n📰 미디어 파트너 혜택\n• 전시회 전·중·후 독점 취재 및 보도자료 우선 제공\n• CEO·바이어 인터뷰 우선 배정\n• 공식 자료·SNS 미디어 파트너 로고 표기${cm}\n\n${sigKo}`
+  };
+  return {
+    subject:`[${ev.name}] Official Media Partnership — ${contact.company}`,
+    body:`${greeting}\n\nWe'd like to invite ${contact.company} as an **Official Media Partner** for **${ev.name}**.\n\n📰 Partner Benefits\n• Exclusive press access pre/during/post show\n• Priority CEO & buyer interview scheduling\n• Official photo/video assets + logo on all materials${cm}\n\nBest regards,\n${sigEn}`
+  };
 }
 
 // ── 유틸 ─────────────────────────────────────────────────────────────────
@@ -863,7 +966,7 @@ function selectEvent(key) {
   const lbl = document.getElementById('gf-show-label');
   if (lbl) lbl.textContent = `📊 ${ev.emoji} ${ev.name} 적합도`;
   // 점수 캐시 초기화 후 재렌더
-  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; });
+  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; c._breakdown = undefined; });
   renderEventDetailBar();
   renderGradeFilterChips();
   renderList();
@@ -897,7 +1000,7 @@ function renderList() {
   }
 
   // 정렬
-  const TYPE_ORDER = {"부스":0,"바이어":1,"스폰서":2,"미디어":3};
+  const TYPE_ORDER = {"부스":0,"바이어":1,"미디어":2,"":3};
   filtered.sort((a, b) => {
     let va, vb;
     if (sortKey === 'priority') {
@@ -937,18 +1040,25 @@ function renderList() {
 function renderContactItem(c) {
   const active = state.selected && state.selected.id===c.id;
   // _suggestedType 없으면 계산 후 캐싱
-  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
+  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; c._breakdown = r.breakdown; }
   const badge = typeBadgeHtml(c._suggestedType || c.type);
   const gr = c._grade;
   const sc = c._score;
   const gradeLabel = {high:'🔥',mid:'⚡',low:'❌'}[gr]||'';
   const dotClass = {high:'high',mid:'mid',low:'low'}[gr]||'';
+  // 점수 산정식 툴팁
+  const tooltipHtml = (c._breakdown && c._breakdown.length)
+    ? `<div class="score-tooltip">
+        ${c._breakdown.map(b=>`<div class="st-row"><span class="st-label">${b.label}</span><span class="st-pts${b.pts<0?' neg':''}">${b.pts>0?'+':''}${b.pts}pt</span></div>`).join('')}
+        <div class="st-divider"></div>
+        <div class="st-total"><span>합계</span><span class="st-total-pts">${sc}pt</span></div>
+      </div>` : '';
   return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
     <div class="ci-top">
       <div class="ci-name">${c._new?'<span class="new-badge">NEW</span>':''}${esc(FLAGS[c.country]||"🌏")} ${esc(c.name||c.company)}</div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <span class="ci-grade-dot ${dotClass}" title="${{high:'높은 적합도',mid:'보통 적합도',low:'낮은 적합도'}[gr]||''}"></span>
-        <span class="ci-score-num">${sc}pt</span>
+        <div class="score-wrap"><span class="ci-score-num">${sc}pt</span>${tooltipHtml}</div>
         ${badge}
       </div>
     </div>
@@ -961,7 +1071,7 @@ function renderGradeFilterChips() {
   const all = contacts;
   // _score, _grade 모두 캐싱 (정렬에도 사용됨)
   all.forEach(c => {
-    if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
+    if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; c._breakdown = r.breakdown; }
   });
   const high = all.filter(c => c._grade === 'high').length;
   const mid  = all.filter(c => c._grade === 'mid').length;
@@ -993,7 +1103,7 @@ function selectContact(id) {
   }
   state.selected = c;
   // 캐시된 AI 추천 유형 우선, 없으면 저장된 type
-  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
+  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; c._breakdown = r.breakdown; }
   state.purpose = c._suggestedType || c.type;
   state.langOverride = "auto";
   state.customNote = "";
@@ -1208,7 +1318,13 @@ function renderDetail() {
 
     <div class="note-row">
       <div class="section-label">추가 맞춤 메모 (선택)</div>
-      <input id="custom-note-input" value="${esc(state.customNote)}" placeholder="예: 지난 전시에서 만남, 특정 카테고리 관심 표명 등" oninput="setNote(this.value)">
+      <div class="note-row-inner">
+        <input id="custom-note-input" value="${esc(state.customNote)}" placeholder="예: 지난 전시에서 만남, 특정 카테고리 관심 표명 등"
+          oninput="onNoteInput(this)"
+          onkeydown="if(event.key==='Enter'){applyNote();event.preventDefault();}"
+          class="${state.customNote ? 'has-value' : ''}">
+        <button class="btn-apply-note" id="apply-note-btn" onclick="applyNote()">메모 반영</button>
+      </div>
     </div>
 
     ${emailHtml}
@@ -1217,7 +1333,22 @@ function renderDetail() {
 
 function setPurpose(p) { state.purpose = p; renderDetail(); }
 function setLang(v) { state.langOverride = v; renderDetail(); }
-function setNote(v) { state.customNote = v; if (state.selected && state.purpose) renderDetail(); }
+function onNoteInput(el) {
+  // 타이핑 중엔 state만 임시 저장, 이메일 재생성 X
+  el.classList.toggle('has-value', el.value.length > 0);
+  // 버튼 상태 초기화 (적용됨 → 기본으로)
+  const btn = document.getElementById('apply-note-btn');
+  if (btn) { btn.textContent = '메모 반영'; btn.classList.remove('applied'); }
+}
+function applyNote() {
+  const el = document.getElementById('custom-note-input');
+  if (!el) return;
+  state.customNote = el.value;
+  const btn = document.getElementById('apply-note-btn');
+  if (btn) { btn.textContent = '✓ 적용됨'; btn.classList.add('applied'); setTimeout(()=>{ btn.textContent='메모 반영'; btn.classList.remove('applied'); }, 1800); }
+  if (state.selected && state.purpose) renderDetail();
+}
+function setNote(v) { state.customNote = v; }
 
 // ── 수동 등록 모달 ────────────────────────────────────────────────────────
 function openAddModal() {
@@ -1291,7 +1422,7 @@ function renderClassifyResult(r) {
   const gs = GRADE[r.grade];
   const tc = TYPE_COLORS[_classifyType]||TYPE_COLORS["부스"];
   const reasons = r.reasons.map(x=>`<span class="reason-tag">${esc(x)}</span>`).join("");
-  const altBtns = ["부스","바이어","스폰서","미디어"].filter(t=>t!==_classifyType).map(t=>{
+  const altBtns = ["부스","바이어","미디어"].filter(t=>t!==_classifyType).map(t=>{
     const at = TYPE_COLORS[t];
     return `<button class="role-alt-btn" onclick="setClassifyType('${t}')" style="border-color:${at.border};color:${at.text}">${t}로 변경</button>`;
   }).join("");
@@ -1440,7 +1571,7 @@ function saveWeights() {
     else if (type === 'contact') CONTACT_WEIGHTS[inp.dataset.key] = val;
   });
   // 점수 캐시 초기화 후 전체 재산정
-  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; });
+  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; c._breakdown = undefined; });
   closeWeightEditor();
   renderGradeFilterChips();
   renderList();
