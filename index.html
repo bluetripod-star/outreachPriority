@@ -1189,7 +1189,7 @@ function renderDetail() {
 
     ${isOrg
       ? `<div class="approach-hint"><span class="ah-icon">💡</span><div><span class="approach-hint-label">추천 접근 방식</span>${esc(c._typeReason||"")}</div></div>`
-      : (()=>{ const st=c._suggestedType||"부스"; const tr=c._typeReason||""; const tc2=TYPE_COLORS[st]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${tr}</span></div>`; })()
+      : (()=>{ const st=c._suggestedType||"부스"; const tr=c._typeReason||""; const tc2=TYPE_COLORS[st]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${tr}</span></div>`; })()}
     <div class="controls-row">
       <div class="purpose-btns">
         <div class="section-label">발송 목적</div>
