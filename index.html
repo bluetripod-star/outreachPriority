@@ -186,6 +186,11 @@
   .btn-add.disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
   .recommend-note { display: flex; align-items: flex-start; gap: 8px; background: #FFF9F7; border: 1px solid #FED7AA; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px; font-size: 11.5px; color: #374151; line-height: 1.5; }
   .recommend-note .rn-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  /* ── 기관 접근방식 힌트 ── */
+  .approach-hint { display: flex; align-items: flex-start; gap: 8px; background: #F9FAFB; border: 1.5px solid #E5E7EB; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; font-size: 11.5px; color: #374151; line-height: 1.6; }
+  .approach-hint .ah-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .approach-hint-label { font-size: 9.5px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: 2px; }
+  .approach-email-box { background: #F9FAFB; border: 1.5px dashed #D1D5DB; border-radius: 9px; padding: 20px; text-align: center; color: #9CA3AF; font-size: 12px; line-height: 1.8; }
 
   /* ── 등급 필터 바 ── */
   #grade-filter-bar { padding: 8px 13px 10px; border-bottom: 1px solid #F3F4F6; background: #FAFAFA; }
@@ -477,9 +482,9 @@ const SHOWS = {
 
 const TYPE_COLORS = {
   "부스":   {bg:"#EEF6FF",border:"#3B82F6",text:"#1D4ED8",label:"🏪 부스 참가"},
-  "바이어": {bg:"#FFF7ED",border:"#F97316",text:"#C2410C",label:"💼 빅 바이어"},
-  "스폰서": {bg:"#FDF4FF",border:"#A855F7",text:"#7E22CE",label:"⭐ 스폰서"},
+  "바이어": {bg:"#FFF7ED",border:"#F97316",text:"#C2410C",label:"💼 바이어"},
   "미디어": {bg:"#F0FDF4",border:"#22C55E",text:"#15803D",label:"📰 미디어"},
+  "":       {bg:"#F9FAFB",border:"#E5E7EB",text:"#9CA3AF",label:"🏛 기관"},
 };
 const FLAGS = {"한국":"🇰🇷","중국":"🇨🇳","일본":"🇯🇵","대만":"🇹🇼","태국":"🇹🇭","베트남":"🇻🇳","인도네시아":"🇮🇩","필리핀":"🇵🇭","싱가포르":"🇸🇬","홍콩":"🇭🇰"};
 
@@ -728,13 +733,44 @@ function classifyContact(f) {
   else if (f.email)        { score+=CONTACT_WEIGHTS.emailOnly; reasons.push("이메일 보유"); }
   else if (f.phone)        { score+=CONTACT_WEIGHTS.phoneOnly; reasons.push("전화번호 보유"); }
   const grade = score>=70?"high":score>=40?"mid":"low";
-  let suggestedType="부스", typeReason="제조/브랜드 업체로 부스 참가 적합";
-  const isBigCo = /lg|삼성|현대|롯데|sk|cj|카카오|네이버|쿠팡|아모레|애경|lotte|hyundai|samsung|purina|mars|royal canin/.test(co);
-  if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자 → 공식 미디어 파트너 협력 적합"; }
-  else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통·구매 담당 → 1:1 바이어 매칭으로 직접 거래 기회 창출"; }
-  else if (isBigCo) { suggestedType="스폰서"; typeReason="대형 브랜드 업체 → 스폰서십으로 전시장 핵심 위치 노출 적합"; }
-  else if (score>=75&&/it|tech|통신|제약|화장품|health/.test(ind)) { suggestedType="스폰서"; typeReason="고점수 전문 업체 → 스폰서십 통해 타겟 관람객 집중 노출 기대"; }
-  else { typeReason="제품/서비스 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업"; }
+  let suggestedType="부스", typeReason="제품/서비스 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업";
+
+  // ── 영업 목적 판정 (우선순위 순) ──────────────────────────────────────────
+  const orgInd = /협회|학회|연구소|재단|대학|병원|의원|공공|기관|정부|association|hospital|university|research|foundation|institute/.test(ind);
+  const orgCo  = /협회|학회|연구소|재단|대학|병원|의원|공공|기관|정부|association|hospital|university|research|foundation|institute/.test(co);
+
+  if (orgInd || orgCo) {
+    // 1순위: 기관성 연락처 → 영업 목적 없음, 접근방식 힌트만
+    suggestedType = "";
+    const oSrc = ind + " " + co;
+    if (/협회|학회|association/.test(oSrc))                           typeReason = "세미나 연사 또는 공식 협력기관 섭외 고려. 바이어 가능성은 대화 중 파악 권장.";
+    else if (/병원|의원|hospital/.test(oSrc))                         typeReason = "제품 구매 기관으로 바이어 가능성 문의 또는 세미나 연사 제안 고려.";
+    else if (/연구소|연구|research/.test(oSrc))                       typeReason = "세미나 연사 또는 전시 참관 초청 고려. 공동 연구·발표 제안도 가능.";
+    else if (/대학|university/.test(oSrc))                            typeReason = "세미나 연사 또는 참관 초청 고려.";
+    else if (/재단|공공|정부|기관|foundation|institute/.test(oSrc))   typeReason = "공식 후원기관 또는 협력기관 섭외 고려.";
+    else                                                               typeReason = "비영리·기관 성격 — 참관, 연사, 협력기관 방향으로 접근 고려.";
+
+  } else if (/미디어|언론|방송|잡지|magazine|media|influencer|content/.test(ind) ||
+             /기자|에디터|pd|reporter|journalist|editor|influencer|blogger|유튜버|youtuber|writer|작가/.test(t)) {
+    // 2순위: 미디어
+    suggestedType = "미디어"; typeReason = "언론·콘텐츠 관련 종사자 → 공식 미디어 파트너 또는 취재 초청 협력 적합";
+
+  } else if (/유통|무역|수입|수출|도매|trade|distribution|import|export|wholesale/.test(ind) ||
+             /buyer|purchasing|sourcing|구매|바이어/.test(t)) {
+    // 3순위: 바이어 (명확한 근거 있을 때만)
+    suggestedType = "바이어"; typeReason = "유통·무역 업종 또는 구매 담당 → 한국 제품 매입·해외 유통 목적의 바이어 가능성";
+
+  } else {
+    // 4순위: 부스 (제품·서비스 판매 업체 기본값)
+    if (/식품|food|건강|영양|농업|farm/.test(ind))         typeReason = "식품·원료 전시 및 바이어 유치 → 부스 참가 적합";
+    else if (/it|기술|tech|robot|ai|digital/.test(ind))   typeReason = "솔루션·서비스 시연 및 비즈매칭 → 부스 참가 적합";
+    else if (/반려동물|펫|pet/.test(ind))                  typeReason = "반려동물 제품·서비스 전시 → 부스 참가 적합";
+    else if (/의료|헬스|health|바이오|bio/.test(ind))      typeReason = "헬스케어 제품·솔루션 전시 → 부스 참가 적합";
+    else if (/화장품|뷰티|beauty|cosmet/.test(ind))        typeReason = "뷰티·코스메틱 제품 전시 → 부스 참가 적합";
+    else if (/제조|manufact/.test(ind))                    typeReason = "자사 제품 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업";
+    // 그 외: 기본 문구 유지
+  }
+
   return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
 }
 
@@ -784,7 +820,8 @@ function generateEmail(contact, purpose, season, customNote) {
 // ── 유틸 ─────────────────────────────────────────────────────────────────
 function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function typeBadgeHtml(type) {
-  const tc = TYPE_COLORS[type]||TYPE_COLORS["부스"];
+  // type이 ""(기관) 이면 TYPE_COLORS[""] 사용, 없는 타입이면 부스 fallback
+  const tc = (type !== undefined && TYPE_COLORS[type]) ? TYPE_COLORS[type] : TYPE_COLORS["부스"];
   return `<span class="type-badge" style="background:${tc.bg};color:${tc.text};border-color:${tc.border}">${tc.label}</span>`;
 }
 function copyText(text, btnId) {
@@ -1060,7 +1097,8 @@ function renderEmptyState() {
 function renderDetail() {
   const c = state.selected;
   if (!c) return;
-  const tc = TYPE_COLORS[c.type]||TYPE_COLORS["부스"];
+  const isOrg = c._suggestedType === "";  // 기관성 연락처 여부
+  const tc = TYPE_COLORS[c._suggestedType !== undefined ? c._suggestedType : c.type] || TYPE_COLORS["부스"];
 
   // 언어 자동 감지
   const lang = c.lang||"";
@@ -1074,11 +1112,11 @@ function renderDetail() {
     eff = {...c, lang: m[state.langOverride]};
   }
 
-  // 이메일 생성
+  // 이메일 생성 (기관이고 목적 없으면 생성 안 함)
   const email = state.purpose ? generateEmail(eff, state.purpose, state.season, state.customNote) : null;
 
-  // purpose 버튼
-  const purposeBtns = ["부스","바이어","스폰서","미디어"].map(p => {
+  // purpose 버튼 (스폰서 제거)
+  const purposeBtns = ["부스","바이어","미디어"].map(p => {
     const t = TYPE_COLORS[p];
     const active = state.purpose===p;
     return `<button class="pill-btn" onclick="setPurpose('${p}')" style="${active?`border-color:${t.border};background:${t.bg};color:${t.text};font-weight:700`:`border-color:#E5E7EB`}">${t.label}</button>`;
@@ -1097,7 +1135,7 @@ function renderDetail() {
     return `<button class="lang-btn${active?" active":""}" onclick="setLang('${v}')">${l}</button>`;
   }).join("");
 
-  // 이메일 출력
+  // 이메일 영역: 기관이고 목적 미선택 → 접근방식 안내, 그 외 → 이메일 or 선택 요청
   const emailHtml = email
     ? `<div class="email-box">
         <div class="email-header">
@@ -1121,7 +1159,13 @@ function renderDetail() {
           </div>
         </div>
       </div>`
-    : `<div class="no-purpose">위에서 <strong>발송 목적</strong>을 선택하면 이메일이 생성됩니다</div>`;
+    : isOrg
+      ? `<div class="approach-email-box">
+           <div style="font-size:18px;margin-bottom:6px">🏛</div>
+           <strong style="color:#374151;font-size:12.5px">이메일 자동 추천 없음</strong><br>
+           <span style="font-size:11px">위 접근 방식을 참고해 직접 발송 목적을 선택하면<br>이메일 초안을 생성할 수 있습니다.</span>
+         </div>`
+      : `<div class="no-purpose">위에서 <strong>발송 목적</strong>을 선택하면 이메일이 생성됩니다</div>`;
 
   const _detailEl = document.getElementById("detail-panel");
   if (!_detailEl) return;
@@ -1143,7 +1187,9 @@ function renderDetail() {
       </div>
     </div>
 
-    ${(()=>{ const st=c._suggestedType||"부스"; const tr=c._typeReason||""; const tc2=TYPE_COLORS[st]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${tr}</span></div>`; })()}
+    ${isOrg
+      ? `<div class="approach-hint"><span class="ah-icon">💡</span><div><span class="approach-hint-label">추천 접근 방식</span>${esc(c._typeReason||"")}</div></div>`
+      : (()=>{ const st=c._suggestedType||"부스"; const tr=c._typeReason||""; const tc2=TYPE_COLORS[st]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${tr}</span></div>`; })()
     <div class="controls-row">
       <div class="purpose-btns">
         <div class="section-label">발송 목적</div>
