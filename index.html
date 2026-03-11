@@ -732,7 +732,8 @@ function classifyContact(f) {
   const isBigCo = /lg|삼성|현대|롯데|sk|cj|카카오|네이버|쿠팡|아모레|애경|lotte|hyundai|samsung|purina|mars|royal canin/.test(co);
   if (/미디어|언론|media|방송/.test(ind)||/기자|reporter|journalist|editor|pd/.test(t)) { suggestedType="미디어"; typeReason="미디어/언론 종사자 → 공식 미디어 파트너 협력 적합"; }
   else if (/유통|무역|trade|distribution|import|export|wholesale/.test(ind)||/buyer|purchasing|sourcing|구매/.test(t)) { suggestedType="바이어"; typeReason="유통·구매 담당 → 1:1 바이어 매칭으로 직접 거래 기회 창출"; }
-  else if (isBigCo||(score>=75&&/it|tech|통신|제약|화장품|health/.test(ind))) { suggestedType="스폰서"; typeReason="높은 브랜드 인지도 → 스폰서십으로 전시장 주요 노출 적합"; }
+  else if (isBigCo) { suggestedType="스폰서"; typeReason="대형 브랜드 업체 → 스폰서십으로 전시장 핵심 위치 노출 적합"; }
+  else if (score>=75&&/it|tech|통신|제약|화장품|health/.test(ind)) { suggestedType="스폰서"; typeReason="고점수 전문 업체 → 스폰서십 통해 타겟 관람객 집중 노출 기대"; }
   else { typeReason="제품/서비스 직접 전시 → 부스 참가로 바이어·관람객과 대면 영업"; }
   return { score:Math.min(score,100), grade, reasons, suggestedType, typeReason };
 }
@@ -825,7 +826,7 @@ function selectEvent(key) {
   const lbl = document.getElementById('gf-show-label');
   if (lbl) lbl.textContent = `📊 ${ev.emoji} ${ev.name} 적합도`;
   // 점수 캐시 초기화 후 재렌더
-  contacts.forEach(c => { c._score = undefined; c._grade = undefined; });
+  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; });
   renderEventDetailBar();
   renderGradeFilterChips();
   renderList();
@@ -898,9 +899,11 @@ function renderList() {
 
 function renderContactItem(c) {
   const active = state.selected && state.selected.id===c.id;
-  const badge = typeBadgeHtml(c.type);
-  const gr = c._grade || classifyContact(c).grade;
-  const sc = c._score ?? classifyContact(c).score;
+  // _suggestedType 없으면 계산 후 캐싱
+  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
+  const badge = typeBadgeHtml(c._suggestedType || c.type);
+  const gr = c._grade;
+  const sc = c._score;
   const gradeLabel = {high:'🔥',mid:'⚡',low:'❌'}[gr]||'';
   const dotClass = {high:'high',mid:'mid',low:'low'}[gr]||'';
   return `<div class="contact-item${active?" active":""}${c._new?" is-new":""}" onclick="selectContact(${c.id})">
@@ -921,7 +924,7 @@ function renderGradeFilterChips() {
   const all = contacts;
   // _score, _grade 모두 캐싱 (정렬에도 사용됨)
   all.forEach(c => {
-    if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; }
+    if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
   });
   const high = all.filter(c => c._grade === 'high').length;
   const mid  = all.filter(c => c._grade === 'mid').length;
@@ -952,7 +955,9 @@ function selectContact(id) {
     return;
   }
   state.selected = c;
-  state.purpose = c.type;
+  // 캐시된 AI 추천 유형 우선, 없으면 저장된 type
+  if (c._score === undefined) { const r = classifyContact(c); c._score = r.score; c._grade = r.grade; c._suggestedType = r.suggestedType; c._typeReason = r.typeReason; }
+  state.purpose = c._suggestedType || c.type;
   state.langOverride = "auto";
   state.customNote = "";
   document.getElementById("empty-state").style.display = "block";
@@ -1127,6 +1132,7 @@ function renderDetail() {
           <div class="cc-name">${esc(FLAGS[c.country]||"🌏")} ${esc(c.name)}</div>
           <div class="cc-company">${esc(c.company)}</div>
           ${c.title?`<div class="cc-title">${esc(c.title)}</div>`:""}
+          ${c.country?`<div style="font-size:10px;color:#9CA3AF;margin-top:2px">${esc(FLAGS[c.country]||"")} ${esc(c.country)}</div>`:""}
         </div>
         <span class="type-badge" style="background:${tc.bg};color:${tc.text};border-color:${tc.border};padding:3px 8px;font-size:11px">${tc.label}</span>
       </div>
@@ -1137,7 +1143,7 @@ function renderDetail() {
       </div>
     </div>
 
-    ${(()=>{ const r=classifyContact(c); const tc2=TYPE_COLORS[r.suggestedType]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${r.typeReason}</span></div>`; })()}
+    ${(()=>{ const st=c._suggestedType||"부스"; const tr=c._typeReason||""; const tc2=TYPE_COLORS[st]||TYPE_COLORS["부스"]; return `<div style="display:flex;align-items:center;gap:7px;background:${tc2.bg};border:1.5px solid ${tc2.border};border-radius:8px;padding:9px 13px;margin-bottom:10px"><span style="background:${tc2.text};color:#fff;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:800;white-space:nowrap">${tc2.label} 추천</span><span style="font-size:11.5px;color:#374151">${tr}</span></div>`; })()}
     <div class="controls-row">
       <div class="purpose-btns">
         <div class="section-label">발송 목적</div>
@@ -1388,7 +1394,7 @@ function saveWeights() {
     else if (type === 'contact') CONTACT_WEIGHTS[inp.dataset.key] = val;
   });
   // 점수 캐시 초기화 후 전체 재산정
-  contacts.forEach(c => { c._score = undefined; c._grade = undefined; });
+  contacts.forEach(c => { c._score = undefined; c._grade = undefined; c._suggestedType = undefined; c._typeReason = undefined; });
   closeWeightEditor();
   renderGradeFilterChips();
   renderList();
